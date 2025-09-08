@@ -1,9 +1,13 @@
-from client import IGClient
+from api.ig_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
-import httpx
-
 
 if __name__ == "__main__":
-    client = IGClient(account_type="prod")
-    client.login()
-    client.get_accounts()
+    account_type = "demo"
+    client = IGClient(
+        base_url=BASE_URLS[account_type],
+        api_key=API_KEYS[account_type],
+        identifier=IDENTIFIERS[account_type],
+        password=PASSWORDS[account_type],
+    )
+    accounts = client.get_accounts()
+    print(accounts)

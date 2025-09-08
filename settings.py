@@ -12,7 +12,7 @@ IG_DEMO_PASSWORD = os.getenv("IG_DEMO_PASSWORD", default="default")
 
 IG_PROD_API_KEY = os.getenv("IG_PROD_API_KEY", default="default")
 IG_PROD_IDENTIFIER = os.getenv("IG_PROD_IDENTIFIER", default="default")
-IG_PROD_PASSWORD = os.getenv("IG_PROD_PASSWORD", default="default"),
+IG_PROD_PASSWORD = os.getenv("IG_PROD_PASSWORD", default="default")
 
 
 BASE_URLS = {

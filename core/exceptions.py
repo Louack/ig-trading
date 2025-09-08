@@ -1,0 +1,2 @@
+class IGAuthenticationError(Exception):
+    pass
