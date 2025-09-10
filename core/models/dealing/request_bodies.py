@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional, Literal
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator, field_serializer
 
 
 Direction = Literal["BUY", "SELL"]
@@ -10,11 +10,11 @@ TimeInForce = Literal["EXECUTE_AND_ELIMINATE", "FILL_OR_KILL"]
 
 
 class CreateOtcPositionRequest(BaseModel):
-    currencyCode: str = Field(..., regex=r"[A-Z]{3}")
-    dealReference: Optional[str] = Field(None, regex=r"[A-Za-z0-9_\-]{1,30}")
+    currencyCode: str = Field(..., pattern=r"[A-Z]{3}")
+    dealReference: Optional[str] = Field(None, pattern=r"[A-Za-z0-9_\-]{1,30}")
     direction: Direction
-    epic: str = Field(..., regex=r"[A-Za-z0-9._]{6,30}")
-    expiry: str = Field(..., regex=r"(\d{2}-)?[A-Z]{3}-\d{2}|-|DFB")
+    epic: str = Field(..., pattern=r"[A-Za-z0-9._]{6,30}")
+    expiry: str = Field(..., pattern=r"(\d{2}-)?[A-Z]{3}-\d{2}|-|DFB")
     forceOpen: bool
     guaranteedStop: bool
     level: Optional[Decimal] = None
@@ -29,20 +29,26 @@ class CreateOtcPositionRequest(BaseModel):
     trailingStop: Optional[bool] = None
     trailingStopIncrement: Optional[Decimal] = None
 
-    @root_validator
-    def validate_constraints(cls, v):
-        force_open = v.get("forceOpen")
-        limit_distance = v.get("limitDistance")
-        limit_level = v.get("limitLevel")
-        stop_distance = v.get("stopDistance")
-        stop_level = v.get("stopLevel")
-        guaranteed_stop = v.get("guaranteedStop")
-        order_type = v.get("orderType")
-        level = v.get("level")
-        quote_id = v.get("quoteId")
-        trailing_stop = v.get("trailingStop")
-        trailing_inc = v.get("trailingStopIncrement")
-        size = v.get("size")
+    @field_serializer('size', 'level', 'limitDistance', 'limitLevel', 'stopDistance', 'stopLevel', 'trailingStopIncrement')
+    def serialize_decimal(self, value):
+        if value is not None:
+            return float(value)
+        return value
+
+    @model_validator(mode='after')
+    def validate_constraints(self):
+        force_open = self.forceOpen
+        limit_distance = self.limitDistance
+        limit_level = self.limitLevel
+        stop_distance = self.stopDistance
+        stop_level = self.stopLevel
+        guaranteed_stop = self.guaranteedStop
+        order_type = self.orderType
+        level = self.level
+        quote_id = self.quoteId
+        trailing_stop = self.trailingStop
+        trailing_inc = self.trailingStopIncrement
+        size = self.size
 
         # size precision (<= 12 decimals)
         if size is not None and isinstance(size, Decimal):
@@ -93,5 +99,62 @@ class CreateOtcPositionRequest(BaseModel):
         if (stop_level is not None) and (stop_distance is not None):
             raise ValueError("Set only one of {stopLevel, stopDistance}")
 
-        return v
+        return self
+
+
+class CloseOtcPositionRequest(BaseModel):
+    dealId: Optional[str] = Field(None, pattern=r".{1,30}")
+    direction: Direction
+    epic: Optional[str] = Field(None, pattern=r"[A-Za-z0-9._]{6,30}")
+    expiry: Optional[str] = Field(None, pattern=r"(\d{2}-)?[A-Z]{3}-\d{2}|-|DFB")
+    level: Optional[Decimal] = None
+    orderType: OrderType
+    quoteId: Optional[str] = None
+    size: Decimal
+    timeInForce: Optional[TimeInForce] = None
+
+    @field_serializer('level', 'size')
+    def serialize_decimal(self, value):
+        if value is not None:
+            return float(value)
+        return value
+
+    @model_validator(mode='after')
+    def validate_constraints(self):
+        deal_id = self.dealId
+        epic = self.epic
+        expiry = self.expiry
+        order_type = self.orderType
+        level = self.level
+        quote_id = self.quoteId
+        size = self.size
+
+        # size precision (<= 12 decimals)
+        if size is not None and isinstance(size, Decimal):
+            exponent = -size.as_tuple().exponent
+            if exponent > 12:
+                raise ValueError("size must not have more than 12 decimal places")
+
+        # Set only one of {dealId, epic}
+        if (deal_id is not None) and (epic is not None):
+            raise ValueError("Set only one of {dealId, epic}")
+
+        # If epic is defined, then set expiry
+        if epic is not None and expiry is None:
+            raise ValueError("If epic is defined, then set expiry")
+
+        # orderType constraints
+        if order_type == "LIMIT":
+            if quote_id is not None:
+                raise ValueError("orderType LIMIT: do not set quoteId")
+            if level is None:
+                raise ValueError("orderType LIMIT: level is required")
+        elif order_type == "MARKET":
+            if level is not None or quote_id is not None:
+                raise ValueError("orderType MARKET: do not set level or quoteId")
+        elif order_type == "QUOTE":
+            if level is None or quote_id is None:
+                raise ValueError("orderType QUOTE: set both level and quoteId")
+
+        return self
 
