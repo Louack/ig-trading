@@ -18,8 +18,6 @@ class PositionDetail(BaseModel):
     currency: str
 
 
-
-
 class Position(BaseModel):
     position: PositionDetail
     market: Market
@@ -38,7 +36,9 @@ class CloseOtcPositionResponse(BaseModel):
 
 
 # Deal Confirmation Enums
-AffectedDealStatus = Literal["AMENDED", "DELETED", "FULLY_CLOSED", "OPENED", "PARTIALLY_CLOSED"]
+AffectedDealStatus = Literal[
+    "AMENDED", "DELETED", "FULLY_CLOSED", "OPENED", "PARTIALLY_CLOSED"
+]
 DealStatus = Literal["ACCEPTED", "REJECTED"]
 Direction = Literal["BUY", "SELL"]
 Reason = Literal[
@@ -103,7 +103,7 @@ Reason = Literal[
     "SUCCESS",
     "TRAILING_STOP_NOT_ALLOWED",
     "UNKNOWN",
-    "WRONG_SIDE_OF_MARKET"
+    "WRONG_SIDE_OF_MARKET",
 ]
 PositionStatus = Literal["AMENDED", "CLOSED", "DELETED", "OPEN", "PARTIALLY_CLOSED"]
 
@@ -135,7 +135,15 @@ class DealConfirmation(BaseModel):
     stopLevel: Optional[Decimal] = None
     trailingStop: bool
 
-    @field_serializer('level', 'limitDistance', 'limitLevel', 'profit', 'size', 'stopDistance', 'stopLevel')
+    @field_serializer(
+        "level",
+        "limitDistance",
+        "limitLevel",
+        "profit",
+        "size",
+        "stopDistance",
+        "stopLevel",
+    )
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)

@@ -20,25 +20,72 @@ class Market(BaseModel):
 # Market Details Enums
 MarketDetailsFilterType = Literal["ALL", "SNAPSHOT_ONLY"]
 Unit = Literal["PERCENTAGE", "POINTS"]
-MarketOrderPreference = Literal["AVAILABLE_DEFAULT_OFF", "AVAILABLE_DEFAULT_ON", "NOT_AVAILABLE"]
+MarketOrderPreference = Literal[
+    "AVAILABLE_DEFAULT_OFF", "AVAILABLE_DEFAULT_ON", "NOT_AVAILABLE"
+]
 TrailingStopsPreference = Literal["AVAILABLE", "NOT_AVAILABLE"]
 InstrumentType = Literal[
-    "BINARY", "BUNGEE_CAPPED", "BUNGEE_COMMODITIES", "BUNGEE_CURRENCIES", "BUNGEE_INDICES",
-    "COMMODITIES", "CURRENCIES", "INDICES", "KNOCKOUTS_COMMODITIES", "KNOCKOUTS_CURRENCIES",
-    "KNOCKOUTS_INDICES", "KNOCKOUTS_SHARES", "OPT_COMMODITIES", "OPT_CURRENCIES", "OPT_INDICES",
-    "OPT_RATES", "OPT_SHARES", "RATES", "SECTORS", "SHARES", "SPRINT_MARKET", "TEST_MARKET", "UNKNOWN"
+    "BINARY",
+    "BUNGEE_CAPPED",
+    "BUNGEE_COMMODITIES",
+    "BUNGEE_CURRENCIES",
+    "BUNGEE_INDICES",
+    "COMMODITIES",
+    "CURRENCIES",
+    "INDICES",
+    "KNOCKOUTS_COMMODITIES",
+    "KNOCKOUTS_CURRENCIES",
+    "KNOCKOUTS_INDICES",
+    "KNOCKOUTS_SHARES",
+    "OPT_COMMODITIES",
+    "OPT_CURRENCIES",
+    "OPT_INDICES",
+    "OPT_RATES",
+    "OPT_SHARES",
+    "RATES",
+    "SECTORS",
+    "SHARES",
+    "SPRINT_MARKET",
+    "TEST_MARKET",
+    "UNKNOWN",
 ]
 TradeUnit = Literal["AMOUNT", "CONTRACTS", "SHARES"]
 MarketStatus = Literal[
-    "CLOSED", "EDITS_ONLY", "OFFLINE", "ON_AUCTION", "ON_AUCTION_NO_EDITS", "SUSPENDED", "TRADEABLE"
+    "CLOSED",
+    "EDITS_ONLY",
+    "OFFLINE",
+    "ON_AUCTION",
+    "ON_AUCTION_NO_EDITS",
+    "SUSPENDED",
+    "TRADEABLE",
 ]
 ExtendedMarketStatus = Literal[
-    "OFFLINE", "CLOSED", "SUSPENDED", "ON_AUCTION", "ON_AUCTION_NO_EDITS", "EDITS_ONLY", 
-    "CLOSINGS_ONLY", "DEAL_NO_EDIT", "TRADEABLE"
+    "OFFLINE",
+    "CLOSED",
+    "SUSPENDED",
+    "ON_AUCTION",
+    "ON_AUCTION_NO_EDITS",
+    "EDITS_ONLY",
+    "CLOSINGS_ONLY",
+    "DEAL_NO_EDIT",
+    "TRADEABLE",
 ]
 Resolution = Literal[
-    "DAY", "HOUR", "HOUR_2", "HOUR_3", "HOUR_4", "MINUTE", "MINUTE_10", "MINUTE_15", 
-    "MINUTE_2", "MINUTE_3", "MINUTE_30", "MINUTE_5", "MONTH", "SECOND", "WEEK"
+    "DAY",
+    "HOUR",
+    "HOUR_2",
+    "HOUR_3",
+    "HOUR_4",
+    "MINUTE",
+    "MINUTE_10",
+    "MINUTE_15",
+    "MINUTE_2",
+    "MINUTE_3",
+    "MINUTE_30",
+    "MINUTE_5",
+    "MONTH",
+    "SECOND",
+    "WEEK",
 ]
 
 
@@ -46,7 +93,7 @@ class DealingRule(BaseModel):
     unit: Unit
     value: Decimal
 
-    @field_serializer('value')
+    @field_serializer("value")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -85,7 +132,7 @@ class SlippageFactor(BaseModel):
     unit: str
     value: Decimal
 
-    @field_serializer('value')
+    @field_serializer("value")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -110,7 +157,7 @@ class Currency(BaseModel):
     isDefault: bool
     symbol: str
 
-    @field_serializer('baseExchangeRate', 'exchangeRate')
+    @field_serializer("baseExchangeRate", "exchangeRate")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -130,7 +177,7 @@ class MarginDepositBand(BaseModel):
     marginFactor: Optional[Decimal] = None
     marginFactorUnit: Optional[Unit] = None
 
-    @field_serializer('margin', 'max', 'min', 'marginFactor')
+    @field_serializer("margin", "max", "min", "marginFactor")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -180,7 +227,9 @@ class Instrument(BaseModel):
     unit: Optional[TradeUnit] = None
     valueOfOnePip: Optional[str] = None
 
-    @field_serializer('lotSize', 'sprintMarketsMaximumExpiryTime', 'sprintMarketsMinimumExpiryTime')
+    @field_serializer(
+        "lotSize", "sprintMarketsMaximumExpiryTime", "sprintMarketsMinimumExpiryTime"
+    )
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -202,7 +251,19 @@ class MarketSnapshot(BaseModel):
     scalingFactor: Optional[Decimal] = None
     updateTime: Optional[str] = None
 
-    @field_serializer('bid', 'binaryOdds', 'controlledRiskExtraSpread', 'decimalPlacesFactor', 'delayTime', 'high', 'low', 'netChange', 'offer', 'percentageChange', 'scalingFactor')
+    @field_serializer(
+        "bid",
+        "binaryOdds",
+        "controlledRiskExtraSpread",
+        "decimalPlacesFactor",
+        "delayTime",
+        "high",
+        "low",
+        "netChange",
+        "offer",
+        "percentageChange",
+        "scalingFactor",
+    )
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -230,7 +291,7 @@ class CurrencyLadder(BaseModel):
     bidSizes: List[Decimal]
     askSizes: List[Decimal]
 
-    @field_serializer('bidSizes', 'askSizes')
+    @field_serializer("bidSizes", "askSizes")
     def serialize_decimal_list(self, value):
         if value is not None:
             return [float(v) for v in value]
@@ -250,7 +311,16 @@ class SingleMarketSnapshot(BaseModel):
     priceLadder: Optional[List[PriceLadder]] = None
     currencyLadders: Optional[List[CurrencyLadder]] = None
 
-    @field_serializer('decimalPlacesFactor', 'delayTime', 'high', 'low', 'netChange', 'percentageChange', 'scalingFactor', 'updateTimestampUTC')
+    @field_serializer(
+        "decimalPlacesFactor",
+        "delayTime",
+        "high",
+        "low",
+        "netChange",
+        "percentageChange",
+        "scalingFactor",
+        "updateTimestampUTC",
+    )
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -276,7 +346,7 @@ class SingleMarketInstrument(BaseModel):
     unit: Optional[TradeUnit] = None
     valueOfOnePip: Optional[str] = None
 
-    @field_serializer('lotSize')
+    @field_serializer("lotSize")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -295,7 +365,7 @@ class Price(BaseModel):
     bid: Optional[Decimal] = None
     lastTraded: Optional[Decimal] = None
 
-    @field_serializer('ask', 'bid', 'lastTraded')
+    @field_serializer("ask", "bid", "lastTraded")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -311,7 +381,7 @@ class HistoricalPrice(BaseModel):
     snapshotTime: str
     snapshotTimeUTC: Optional[str] = None
 
-    @field_serializer('lastTradedVolume')
+    @field_serializer("lastTradedVolume")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -324,7 +394,7 @@ class PageData(BaseModel):
     totalPages: Decimal
     size: Optional[Decimal] = None
 
-    @field_serializer('pageNumber', 'pageSize', 'totalPages', 'size')
+    @field_serializer("pageNumber", "pageSize", "totalPages", "size")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
@@ -336,7 +406,7 @@ class Allowance(BaseModel):
     remainingAllowance: Decimal
     totalAllowance: Decimal
 
-    @field_serializer('allowanceExpiry', 'remainingAllowance', 'totalAllowance')
+    @field_serializer("allowanceExpiry", "remainingAllowance", "totalAllowance")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)

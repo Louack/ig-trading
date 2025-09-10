@@ -21,6 +21,5 @@ class Account(BaseModel):
     currency: str
 
 
-
 class Accounts(BaseModel):
     accounts: List[Account]
