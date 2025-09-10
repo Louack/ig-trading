@@ -9,5 +9,15 @@ if __name__ == "__main__":
         identifier=IDENTIFIERS[account_type],
         password=PASSWORDS[account_type],
     )
-    accounts = client.get_accounts()
-    print(accounts)
+    body_data = {
+        "currencyCode": "GBP",
+        "direction": "BUY",
+        "epic": "CS.D.EURUSD.CFD.IP",
+        "expiry": "DFB",
+        "forceOpen": True,
+        "guaranteedStop": False,
+        "orderType": "MARKET",
+        "size": 1,
+    }
+    created = client.create_position_otc(body_data)
+    print(created)
