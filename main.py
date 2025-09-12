@@ -47,6 +47,61 @@ if __name__ == "__main__":
     accounts = client.accounts.get_accounts()
     print(accounts)
 
+    # Example: Get account preferences
+    print("\n=== Getting Account Preferences ===")
+    preferences = client.accounts.get_preferences()
+    print("Account preferences:", preferences)
+
+    # Example: Update account preferences
+    print("\n=== Updating Account Preferences ===")
+    update_preferences_data = {
+        "trailingStopsEnabled": False  # Enable trailing stops
+    }
+    updated_preferences = client.accounts.update_preferences(body_data=update_preferences_data)
+    print("Updated preferences:", updated_preferences)
+
+    # Verify the update
+    print("\n=== Verifying Updated Preferences ===")
+    updated_prefs = client.accounts.get_preferences()
+    print("Updated account preferences:", updated_prefs)
+
+    # Example: Get account activities (recent activity)
+    print("\n=== Getting Account Activities (Recent) ===")
+    activities = client.accounts.get_activities()
+    print("Recent activities:", activities)
+
+    # Example: Get account activities with filters
+    print("\n=== Getting Account Activities (Filtered) ===")
+    activity_filters = {
+        "pageSize": 10,
+        "detailed": True
+    }
+    filtered_activities = client.accounts.get_activities(query_params=activity_filters)
+    print("Filtered activities:", filtered_activities)
+
+    # Example: Get account activities by date range (different endpoint)
+    print("\n=== Getting Account Activities by Date Range ===")
+    activities_by_date = client.accounts.get_activities_by_date_range(
+        from_date="01-01-2024",
+        to_date="31-12-2024"
+    )
+    print("Activities by date range:", activities_by_date)
+
+    # Example: Get transaction history
+    print("\n=== Getting Transaction History ===")
+    transactions = client.accounts.get_transactions()
+    print("Recent transactions:", transactions)
+
+    # Example: Get transaction history with filters
+    print("\n=== Getting Transaction History (Filtered) ===")
+    transaction_filters = {
+        "type": "ALL_DEAL",
+        "pageSize": 10,
+        "pageNumber": 1
+    }
+    filtered_transactions = client.accounts.get_transactions(query_params=transaction_filters)
+    print("Filtered transactions:", filtered_transactions)
+
     positions = client.dealing.get_positions()
     print(positions)
 
