@@ -3,8 +3,14 @@ from api.ig_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
 from core.logging_config import setup_logging, error_tracker
 from core.exceptions import (
-    IGAuthenticationError, IGValidationError, IGRateLimitError,
-    IGNotFoundError, IGServerError, IGAPIError, IGNetworkError, IGTimeoutError
+    IGAuthenticationError,
+    IGValidationError,
+    IGRateLimitError,
+    IGNotFoundError,
+    IGServerError,
+    IGAPIError,
+    IGNetworkError,
+    IGTimeoutError,
 )
 
 # Setup logging
@@ -15,43 +21,43 @@ logger = logging.getLogger(__name__)
 def handle_api_error(error: Exception, operation: str):
     """Centralized error handling for API operations"""
     error_tracker.track_error(error, {"operation": operation})
-    
+
     if isinstance(error, IGAuthenticationError):
         logger.error(f"Authentication failed for {operation}: {error}")
         # Handle auth failure (refresh tokens, re-authenticate, etc.)
         return "AUTH_FAILED"
-        
+
     elif isinstance(error, IGValidationError):
         logger.error(f"Validation error for {operation}: {error}")
         logger.error(f"Error details: {error.details}")
         # Handle validation errors (fix request parameters)
         return "VALIDATION_ERROR"
-        
+
     elif isinstance(error, IGRateLimitError):
         logger.error(f"Rate limited for {operation}: {error}")
         # Handle rate limiting (wait, use different endpoint, etc.)
         return "RATE_LIMITED"
-        
+
     elif isinstance(error, IGNotFoundError):
         logger.error(f"Resource not found for {operation}: {error}")
         # Handle not found errors
         return "NOT_FOUND"
-        
+
     elif isinstance(error, IGServerError):
         logger.error(f"Server error for {operation}: {error}")
         # Handle server errors (retry later, contact support)
         return "SERVER_ERROR"
-        
+
     elif isinstance(error, (IGNetworkError, IGTimeoutError)):
         logger.error(f"Network/timeout error for {operation}: {error}")
         # Handle network issues
         return "NETWORK_ERROR"
-        
+
     elif isinstance(error, IGAPIError):
         logger.error(f"IG API error for {operation}: {error}")
         # Handle other IG-specific errors
         return "API_ERROR"
-        
+
     else:
         logger.error(f"Unexpected error for {operation}: {error}")
         # Handle unexpected errors
@@ -69,9 +75,9 @@ def main():
             identifier=IDENTIFIERS[account_type],
             password=PASSWORDS[account_type],
         )
-        
+
         logger.info("IG Client initialized successfully")
-        
+
         # Example 1: Get accounts with error handling
         print("\n=== Getting Accounts ===")
         try:
@@ -80,7 +86,7 @@ def main():
         except Exception as e:
             result = handle_api_error(e, "get_accounts")
             print(f"Failed to get accounts: {result}")
-        
+
         # Example 2: Get account preferences with error handling
         print("\n=== Getting Account Preferences ===")
         try:
@@ -89,7 +95,7 @@ def main():
         except Exception as e:
             result = handle_api_error(e, "get_preferences")
             print(f"Failed to get preferences: {result}")
-        
+
         # Example 3: Update preferences with validation
         print("\n=== Updating Account Preferences ===")
         try:
@@ -99,7 +105,7 @@ def main():
         except Exception as e:
             result = handle_api_error(e, "update_preferences")
             print(f"Failed to update preferences: {result}")
-        
+
         # Example 4: Get activities with error handling
         print("\n=== Getting Account Activities ===")
         try:
@@ -108,19 +114,18 @@ def main():
         except Exception as e:
             result = handle_api_error(e, "get_activities")
             print(f"Failed to get activities: {result}")
-        
+
         # Example 5: Get activities by date range with validation
         print("\n=== Getting Activities by Date Range ===")
         try:
             activities_by_date = client.accounts.get_activities_by_date_range(
-                from_date="01-01-2024",
-                to_date="31-12-2024"
+                from_date="01-01-2024", to_date="31-12-2024"
             )
             print("Date range activities retrieved successfully:", activities_by_date)
         except Exception as e:
             result = handle_api_error(e, "get_activities_by_date_range")
             print(f"Failed to get date range activities: {result}")
-        
+
         # Example 6: Get transactions with error handling
         print("\n=== Getting Transaction History ===")
         try:
@@ -129,44 +134,46 @@ def main():
         except Exception as e:
             result = handle_api_error(e, "get_transactions")
             print(f"Failed to get transactions: {result}")
-        
+
         # Example 7: Get filtered transactions
         print("\n=== Getting Filtered Transactions ===")
         try:
-            transaction_filters = {
-                "type": "ALL_DEAL",
-                "pageSize": 10,
-                "pageNumber": 1
-            }
-            filtered_transactions = client.accounts.get_transactions(query_params=transaction_filters)
-            print("Filtered transactions retrieved successfully:", filtered_transactions)
+            transaction_filters = {"type": "ALL_DEAL", "pageSize": 10, "pageNumber": 1}
+            filtered_transactions = client.accounts.get_transactions(
+                query_params=transaction_filters
+            )
+            print(
+                "Filtered transactions retrieved successfully:", filtered_transactions
+            )
         except Exception as e:
             result = handle_api_error(e, "get_filtered_transactions")
             print(f"Failed to get filtered transactions: {result}")
-        
+
         # Example 8: Demonstrate validation error handling
         print("\n=== Testing Validation Error Handling ===")
         try:
             # This should trigger a validation error
-            invalid_transactions = client.accounts.get_transactions(query_params={
-                "type": "INVALID_TYPE",  # Invalid transaction type
-                "pageSize": -1  # Invalid page size
-            })
+            invalid_transactions = client.accounts.get_transactions(
+                query_params={
+                    "type": "INVALID_TYPE",  # Invalid transaction type
+                    "pageSize": -1,  # Invalid page size
+                }
+            )
         except Exception as e:
             result = handle_api_error(e, "test_validation")
             print(f"Validation error test result: {result}")
-        
+
         # Print error summary
         print("\n=== Error Summary ===")
         error_summary = error_tracker.get_error_summary()
         print(f"Total errors encountered: {error_summary['total_errors']}")
-        if error_summary['error_counts']:
+        if error_summary["error_counts"]:
             print("Error breakdown:")
-            for error_type, count in error_summary['error_counts'].items():
+            for error_type, count in error_summary["error_counts"].items():
                 print(f"  {error_type}: {count}")
         else:
             print("No errors encountered!")
-            
+
     except Exception as e:
         logger.critical(f"Critical error in main: {e}", exc_info=True)
         print(f"Critical error: {e}")

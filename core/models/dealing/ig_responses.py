@@ -31,8 +31,16 @@ class PositionMarket(BaseModel):
     updateTime: Optional[str] = None
     updateTimeUTC: Optional[str] = None
 
-    @field_serializer('bid', 'high', 'lotSize', 'low', 'netChange', 'offer', 
-                     'percentageChange', 'scalingFactor')
+    @field_serializer(
+        "bid",
+        "high",
+        "lotSize",
+        "low",
+        "netChange",
+        "offer",
+        "percentageChange",
+        "scalingFactor",
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
@@ -54,8 +62,16 @@ class PositionDetail(BaseModel):
     trailingStep: Optional[Decimal] = None
     trailingStopDistance: Optional[Decimal] = None
 
-    @field_serializer('contractSize', 'level', 'limitLevel', 'limitedRiskPremium', 
-                     'size', 'stopLevel', 'trailingStep', 'trailingStopDistance')
+    @field_serializer(
+        "contractSize",
+        "level",
+        "limitLevel",
+        "limitedRiskPremium",
+        "size",
+        "stopLevel",
+        "trailingStep",
+        "trailingStopDistance",
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
@@ -225,8 +241,16 @@ class WorkingOrderMarketData(BaseModel):
     updateTime: Optional[str] = None
     updateTimeUTC: Optional[str] = None
 
-    @field_serializer('bid', 'high', 'lotSize', 'low', 'netChange', 'offer', 
-                     'percentageChange', 'scalingFactor')
+    @field_serializer(
+        "bid",
+        "high",
+        "lotSize",
+        "low",
+        "netChange",
+        "offer",
+        "percentageChange",
+        "scalingFactor",
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
@@ -250,8 +274,9 @@ class WorkingOrderData(BaseModel):
     stopDistance: Optional[Decimal] = None
     timeInForce: Optional[TimeInForce] = None
 
-    @field_serializer('limitDistance', 'limitedRiskPremium', 'orderLevel', 
-                     'orderSize', 'stopDistance')
+    @field_serializer(
+        "limitDistance", "limitedRiskPremium", "orderLevel", "orderSize", "stopDistance"
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 

@@ -29,13 +29,21 @@ class CreateOtcPositionRequest(BaseModel):
     trailingStop: Optional[bool] = None
     trailingStopIncrement: Optional[Decimal] = None
 
-    @field_serializer('size', 'level', 'limitDistance', 'limitLevel', 'stopDistance', 'stopLevel', 'trailingStopIncrement')
+    @field_serializer(
+        "size",
+        "level",
+        "limitDistance",
+        "limitLevel",
+        "stopDistance",
+        "stopLevel",
+        "trailingStopIncrement",
+    )
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
         return value
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_constraints(self):
         force_open = self.forceOpen
         limit_distance = self.limitDistance
@@ -58,16 +66,22 @@ class CreateOtcPositionRequest(BaseModel):
 
         # If limitDistance/limitLevel set => forceOpen must be true
         if (limit_distance is not None or limit_level is not None) and not force_open:
-            raise ValueError("forceOpen must be true when limitDistance/limitLevel is set")
+            raise ValueError(
+                "forceOpen must be true when limitDistance/limitLevel is set"
+            )
 
         # If stopDistance/stopLevel set => forceOpen must be true
         if (stop_distance is not None or stop_level is not None) and not force_open:
-            raise ValueError("forceOpen must be true when stopDistance/stopLevel is set")
+            raise ValueError(
+                "forceOpen must be true when stopDistance/stopLevel is set"
+            )
 
         # guaranteedStop constraints
         if guaranteed_stop:
             if (stop_level is None) == (stop_distance is None):
-                raise ValueError("guaranteedStop true: set only one of stopLevel or stopDistance")
+                raise ValueError(
+                    "guaranteedStop true: set only one of stopLevel or stopDistance"
+                )
 
         # orderType constraints
         if order_type == "LIMIT":
@@ -91,7 +105,9 @@ class CreateOtcPositionRequest(BaseModel):
             if guaranteed_stop:
                 raise ValueError("trailingStop true: guaranteedStop must be false")
             if stop_distance is None or trailing_inc is None:
-                raise ValueError("trailingStop true: set stopDistance and trailingStopIncrement")
+                raise ValueError(
+                    "trailingStop true: set stopDistance and trailingStopIncrement"
+                )
 
         # exclusivity
         if (limit_level is not None) and (limit_distance is not None):
@@ -106,20 +122,22 @@ class CloseOtcPositionRequest(BaseModel):
     dealId: Optional[str] = Field(default=None, pattern=r".{1,30}")
     direction: Direction
     epic: Optional[str] = Field(default=None, pattern=r"[A-Za-z0-9._]{6,30}")
-    expiry: Optional[str] = Field(default=None, pattern=r"(\d{2}-)?[A-Z]{3}-\d{2}|-|DFB")
+    expiry: Optional[str] = Field(
+        default=None, pattern=r"(\d{2}-)?[A-Z]{3}-\d{2}|-|DFB"
+    )
     level: Optional[Decimal] = Field(default=None)
     orderType: OrderType
     quoteId: Optional[str] = Field(default=None)
     size: Decimal
     timeInForce: Optional[TimeInForce] = Field(default=None)
 
-    @field_serializer('level', 'size')
+    @field_serializer("level", "size")
     def serialize_decimal(self, value):
         if value is not None:
             return float(value)
         return value
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_constraints(self):
         deal_id = self.dealId
         epic = self.epic
@@ -134,7 +152,7 @@ class CloseOtcPositionRequest(BaseModel):
             exponent = -size.as_tuple().exponent
             if exponent > 12:
                 raise ValueError("size must not have more than 12 decimal places")
-        
+
         # At least one of {dealId, epic} must be set
         if (deal_id is None) and (epic is None):
             raise ValueError("Set one of {dealId, epic}")
@@ -167,11 +185,13 @@ class UpdateOtcPositionRequest(BaseModel):
     trailingStopDistance: Optional[Decimal] = None
     trailingStopIncrement: Optional[Decimal] = None
 
-    @field_serializer('limitLevel', 'stopLevel', 'trailingStopDistance', 'trailingStopIncrement')
+    @field_serializer(
+        "limitLevel", "stopLevel", "trailingStopDistance", "trailingStopIncrement"
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_update_position_constraints(self):
         guaranteed_stop = self.guaranteedStop
         trailing_stop = self.trailingStop
@@ -189,8 +209,13 @@ class UpdateOtcPositionRequest(BaseModel):
 
         # If trailingStop equals false, then DO NOT set trailingStopDistance,trailingStopIncrement
         if trailing_stop is False:
-            if trailing_stop_distance is not None or trailing_stop_increment is not None:
-                raise ValueError("trailingStop false: do not set trailingStopDistance or trailingStopIncrement")
+            if (
+                trailing_stop_distance is not None
+                or trailing_stop_increment is not None
+            ):
+                raise ValueError(
+                    "trailingStop false: do not set trailingStopDistance or trailingStopIncrement"
+                )
 
         # If trailingStop equals true, then guaranteedStop must be false
         if trailing_stop is True and guaranteed_stop is True:
@@ -198,8 +223,14 @@ class UpdateOtcPositionRequest(BaseModel):
 
         # If trailingStop equals true, then set trailingStopDistance,trailingStopIncrement,stopLevel
         if trailing_stop is True:
-            if trailing_stop_distance is None or trailing_stop_increment is None or stop_level is None:
-                raise ValueError("trailingStop true: set trailingStopDistance, trailingStopIncrement, and stopLevel")
+            if (
+                trailing_stop_distance is None
+                or trailing_stop_increment is None
+                or stop_level is None
+            ):
+                raise ValueError(
+                    "trailingStop true: set trailingStopDistance, trailingStopIncrement, and stopLevel"
+                )
 
         return self
 
@@ -216,22 +247,28 @@ class CreateWorkingOrderRequest(BaseModel):
     epic: str = Field(...)
     expiry: str = Field(..., pattern=r"(\d{2}-)?[A-Z]{3}-\d{2}|-|DFB")
     forceOpen: Optional[bool] = None
-    goodTillDate: Optional[str] = Field(None, pattern=r"(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}|\d*)")
+    goodTillDate: Optional[str] = Field(
+        None, pattern=r"(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}|\d*)"
+    )
     guaranteedStop: bool
     level: Decimal
     limitDistance: Optional[Decimal] = None
     limitLevel: Optional[Decimal] = None
-    size: Decimal = Field(..., description="Check precision is not more than 12 decimal places")
+    size: Decimal = Field(
+        ..., description="Check precision is not more than 12 decimal places"
+    )
     stopDistance: Optional[Decimal] = None
     stopLevel: Optional[Decimal] = None
     timeInForce: Optional[WorkingOrderTimeInForce] = None
     type: WorkingOrderType
 
-    @field_serializer('level', 'limitDistance', 'limitLevel', 'size', 'stopDistance', 'stopLevel')
+    @field_serializer(
+        "level", "limitDistance", "limitLevel", "size", "stopDistance", "stopLevel"
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_working_order_constraints(self):
         guaranteed_stop = self.guaranteedStop
         time_in_force = self.timeInForce
@@ -261,7 +298,9 @@ class CreateWorkingOrderRequest(BaseModel):
 
 
 class UpdateWorkingOrderRequest(BaseModel):
-    goodTillDate: Optional[str] = Field(None, pattern=r"(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}|\d*)")
+    goodTillDate: Optional[str] = Field(
+        None, pattern=r"(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}|\d*)"
+    )
     guaranteedStop: Optional[bool] = None
     level: Decimal  # Required
     limitDistance: Optional[Decimal] = None
@@ -271,11 +310,13 @@ class UpdateWorkingOrderRequest(BaseModel):
     timeInForce: Optional[WorkingOrderTimeInForce] = None
     type: Optional[WorkingOrderType] = None
 
-    @field_serializer('level', 'limitDistance', 'limitLevel', 'stopDistance', 'stopLevel')
+    @field_serializer(
+        "level", "limitDistance", "limitLevel", "stopDistance", "stopLevel"
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_update_working_order_constraints(self):
         guaranteed_stop = self.guaranteedStop
         time_in_force = self.timeInForce
@@ -302,4 +343,3 @@ class UpdateWorkingOrderRequest(BaseModel):
             raise ValueError("Set only one of {stopLevel, stopDistance}")
 
         return self
-

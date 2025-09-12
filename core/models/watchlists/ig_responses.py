@@ -17,19 +17,41 @@ class WatchlistsResponse(BaseModel):
 
 # Instrument types for watchlist markets
 InstrumentType = Literal[
-    "BINARY", "BUNGEE_CAPPED", "BUNGEE_COMMODITIES", "BUNGEE_CURRENCIES", 
-    "BUNGEE_INDICES", "COMMODITIES", "CURRENCIES", "INDICES", 
-    "KNOCKOUTS_COMMODITIES", "KNOCKOUTS_CURRENCIES", "KNOCKOUTS_INDICES", 
-    "KNOCKOUTS_SHARES", "OPT_COMMODITIES", "OPT_CURRENCIES", "OPT_INDICES", 
-    "OPT_RATES", "OPT_SHARES", "RATES", "SECTORS", "SHARES", 
-    "SPRINT_MARKET", "TEST_MARKET", "UNKNOWN"
+    "BINARY",
+    "BUNGEE_CAPPED",
+    "BUNGEE_COMMODITIES",
+    "BUNGEE_CURRENCIES",
+    "BUNGEE_INDICES",
+    "COMMODITIES",
+    "CURRENCIES",
+    "INDICES",
+    "KNOCKOUTS_COMMODITIES",
+    "KNOCKOUTS_CURRENCIES",
+    "KNOCKOUTS_INDICES",
+    "KNOCKOUTS_SHARES",
+    "OPT_COMMODITIES",
+    "OPT_CURRENCIES",
+    "OPT_INDICES",
+    "OPT_RATES",
+    "OPT_SHARES",
+    "RATES",
+    "SECTORS",
+    "SHARES",
+    "SPRINT_MARKET",
+    "TEST_MARKET",
+    "UNKNOWN",
 ]
 
 
 # Market status for watchlist markets
 MarketStatus = Literal[
-    "CLOSED", "EDITS_ONLY", "OFFLINE", "ON_AUCTION", 
-    "ON_AUCTION_NO_EDITS", "SUSPENDED", "TRADEABLE"
+    "CLOSED",
+    "EDITS_ONLY",
+    "OFFLINE",
+    "ON_AUCTION",
+    "ON_AUCTION_NO_EDITS",
+    "SUSPENDED",
+    "TRADEABLE",
 ]
 
 
@@ -52,8 +74,16 @@ class WatchlistMarket(BaseModel):
     updateTime: Optional[str] = None
     updateTimeUTC: Optional[str] = None
 
-    @field_serializer('bid', 'high', 'lotSize', 'low', 'netChange', 'offer', 
-                     'percentageChange', 'scalingFactor')
+    @field_serializer(
+        "bid",
+        "high",
+        "lotSize",
+        "low",
+        "netChange",
+        "offer",
+        "percentageChange",
+        "scalingFactor",
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
@@ -79,10 +109,7 @@ class RemoveMarketFromWatchlistResponse(BaseModel):
 
 
 # Response status for create watchlist
-CreateWatchlistStatus = Literal[
-    "SUCCESS",
-    "SUCCESS_NOT_ALL_INSTRUMENTS_ADDED"
-]
+CreateWatchlistStatus = Literal["SUCCESS", "SUCCESS_NOT_ALL_INSTRUMENTS_ADDED"]
 
 
 class CreateWatchlistResponse(BaseModel):

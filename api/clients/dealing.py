@@ -1,7 +1,11 @@
 from typing import Dict, Any
 
 from api.rest import IGRest
-from api.error_handling import handle_api_errors, handle_validation_errors, handle_response_parsing
+from api.error_handling import (
+    handle_api_errors,
+    handle_validation_errors,
+    handle_response_parsing,
+)
 from core.validators import PathValidators
 from core.models.dealing.ig_responses import (
     Positions,
@@ -39,7 +43,7 @@ class DealingClient:
     @handle_response_parsing("get_position")
     def get_position(self, deal_id: str) -> Dict[str, Any]:
         PathValidators.validate_deal_id(deal_id)
-        
+
         json = self.rest.get(endpoint=f"/positions/{deal_id}", version="2")
         response = Position(**json)
         return response.model_dump()
@@ -61,7 +65,7 @@ class DealingClient:
     @handle_response_parsing("get_deal_confirmation")
     def get_deal_confirmation(self, deal_reference: str) -> Dict[str, Any]:
         PathValidators.validate_deal_id(deal_reference)
-        
+
         json = self.rest.get(endpoint=f"/confirms/{deal_reference}", version="1")
         response = DealConfirmation(**json)
         return response.model_dump()
@@ -82,9 +86,11 @@ class DealingClient:
     @handle_api_errors("update_position_otc")
     @handle_validation_errors("update_position_otc")
     @handle_response_parsing("update_position_otc")
-    def update_position_otc(self, deal_id: str, body_data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_position_otc(
+        self, deal_id: str, body_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         PathValidators.validate_deal_id(deal_id)
-        
+
         validated_request = UpdateOtcPositionRequest(**body_data)
         json = self.rest.put(
             endpoint=f"/positions/otc/{deal_id}",
@@ -118,7 +124,7 @@ class DealingClient:
     @handle_response_parsing("delete_working_order_otc")
     def delete_working_order_otc(self, deal_id: str) -> Dict[str, Any]:
         PathValidators.validate_deal_id(deal_id)
-        
+
         json = self.rest.delete(endpoint=f"/workingorders/otc/{deal_id}", version="2")
         response = DeleteWorkingOrderResponse(**json)
         return response.model_dump()
@@ -126,9 +132,11 @@ class DealingClient:
     @handle_api_errors("update_working_order_otc")
     @handle_validation_errors("update_working_order_otc")
     @handle_response_parsing("update_working_order_otc")
-    def update_working_order_otc(self, deal_id: str, body_data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_working_order_otc(
+        self, deal_id: str, body_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         PathValidators.validate_deal_id(deal_id)
-        
+
         validated_request = UpdateWorkingOrderRequest(**body_data)
         json = self.rest.put(
             endpoint=f"/workingorders/otc/{deal_id}",

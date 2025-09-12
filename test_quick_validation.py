@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 def quick_validation_test():
     """Quick validation of all read-only routes"""
-    
+
     print("⚡ QUICK VALIDATION TEST - READ-ONLY ROUTES")
-    print("="*50)
-    
+    print("=" * 50)
+
     # Initialize client
     try:
         account_type = "demo"
@@ -33,30 +33,38 @@ def quick_validation_test():
     except Exception as e:
         print(f"❌ Client initialization failed: {e}")
         return
-    
+
     tests = [
         # Accounts routes
         ("GET /accounts", lambda: client.accounts.get_accounts()),
         ("GET /accounts/preferences", lambda: client.accounts.get_preferences()),
         ("GET /history/activity", lambda: client.accounts.get_activities()),
         ("GET /history/transactions", lambda: client.accounts.get_transactions()),
-        
         # Dealing routes
         ("GET /positions", lambda: client.dealing.get_positions()),
         ("GET /workingorders", lambda: client.dealing.get_working_orders()),
-        
         # Markets routes
-        ("GET /markets", lambda: client.markets.get_markets(epics="IX.D.NASDAQ.IFE.IP")),
-        ("GET /markets/{epic}", lambda: client.markets.get_market("IX.D.NASDAQ.IFE.IP")),
-        ("GET /prices/{epic}", lambda: client.markets.get_prices("IX.D.NASDAQ.IFE.IP", {"resolution": "MINUTE", "max": 5})),
-        
+        (
+            "GET /markets",
+            lambda: client.markets.get_markets(epics="IX.D.NASDAQ.IFE.IP"),
+        ),
+        (
+            "GET /markets/{epic}",
+            lambda: client.markets.get_market("IX.D.NASDAQ.IFE.IP"),
+        ),
+        (
+            "GET /prices/{epic}",
+            lambda: client.markets.get_prices(
+                "IX.D.NASDAQ.IFE.IP", {"resolution": "MINUTE", "max": 5}
+            ),
+        ),
         # Watchlists routes
         ("GET /watchlists", lambda: client.watchlists.get_watchlists()),
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test_name, test_func in tests:
         try:
             result = test_func()
@@ -65,9 +73,9 @@ def quick_validation_test():
         except Exception as e:
             print(f"❌ {test_name}: {str(e)[:100]}...")
             failed += 1
-    
+
     print(f"\n📊 Results: {passed} passed, {failed} failed")
-    
+
     if failed == 0:
         print("🎉 All read-only routes are working!")
     else:
@@ -76,10 +84,10 @@ def quick_validation_test():
 
 def validation_error_test():
     """Test validation error handling"""
-    
+
     print("\n🔍 VALIDATION ERROR TEST")
-    print("="*30)
-    
+    print("=" * 30)
+
     try:
         account_type = "demo"
         client = IGClient(
@@ -88,15 +96,23 @@ def validation_error_test():
             identifier=IDENTIFIERS[account_type],
             password=PASSWORDS[account_type],
         )
-        
+
         # Test validation errors
         validation_tests = [
-            ("Invalid date format", lambda: client.accounts.get_activities_by_date_range("2024-01-01", "2024-12-31")),
+            (
+                "Invalid date format",
+                lambda: client.accounts.get_activities_by_date_range(
+                    "2024-01-01", "2024-12-31"
+                ),
+            ),
             ("Invalid deal ID", lambda: client.dealing.get_position("")),
             ("Invalid epic", lambda: client.markets.get_market("INVALID")),
-            ("Invalid transaction type", lambda: client.accounts.get_transactions({"type": "INVALID_TYPE"})),
+            (
+                "Invalid transaction type",
+                lambda: client.accounts.get_transactions({"type": "INVALID_TYPE"}),
+            ),
         ]
-        
+
         for test_name, test_func in validation_tests:
             try:
                 test_func()
@@ -106,7 +122,7 @@ def validation_error_test():
                     print(f"✅ {test_name}: Validation error caught")
                 else:
                     print(f"⚠️  {test_name}: Unexpected error: {str(e)[:50]}...")
-        
+
     except Exception as e:
         print(f"❌ Validation test setup failed: {e}")
 

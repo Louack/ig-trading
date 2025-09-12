@@ -5,7 +5,7 @@ from pydantic import BaseModel, field_serializer
 # Account type constants
 AccountType = Literal["CFD", "PHYSICAL", "SPREADBET"]
 
-# Account status constants  
+# Account status constants
 AccountStatus = Literal["DISABLED", "ENABLED", "SUSPENDED_FROM_DEALING"]
 
 
@@ -15,7 +15,7 @@ class Balance(BaseModel):
     deposit: Decimal
     profitLoss: Decimal
 
-    @field_serializer('available', 'balance', 'deposit', 'profitLoss')
+    @field_serializer("available", "balance", "deposit", "profitLoss")
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 
@@ -50,15 +50,29 @@ class UpdatePreferencesResponse(BaseModel):
 
 
 # Activity-related constants
-Channel = Literal["DEALER", "MOBILE", "PUBLIC_FIX_API", "PUBLIC_WEB_API", "SYSTEM", "WEB"]
+Channel = Literal[
+    "DEALER", "MOBILE", "PUBLIC_FIX_API", "PUBLIC_WEB_API", "SYSTEM", "WEB"
+]
 
 ActionType = Literal[
-    "LIMIT_ORDER_AMENDED", "LIMIT_ORDER_DELETED", "LIMIT_ORDER_FILLED", 
-    "LIMIT_ORDER_OPENED", "LIMIT_ORDER_ROLLED", "POSITION_CLOSED",
-    "POSITION_DELETED", "POSITION_OPENED", "POSITION_PARTIALLY_CLOSED",
-    "POSITION_ROLLED", "STOP_LIMIT_AMENDED", "STOP_ORDER_AMENDED",
-    "STOP_ORDER_DELETED", "STOP_ORDER_FILLED", "STOP_ORDER_OPENED",
-    "STOP_ORDER_ROLLED", "UNKNOWN", "WORKING_ORDER_DELETED"
+    "LIMIT_ORDER_AMENDED",
+    "LIMIT_ORDER_DELETED",
+    "LIMIT_ORDER_FILLED",
+    "LIMIT_ORDER_OPENED",
+    "LIMIT_ORDER_ROLLED",
+    "POSITION_CLOSED",
+    "POSITION_DELETED",
+    "POSITION_OPENED",
+    "POSITION_PARTIALLY_CLOSED",
+    "POSITION_ROLLED",
+    "STOP_LIMIT_AMENDED",
+    "STOP_ORDER_AMENDED",
+    "STOP_ORDER_DELETED",
+    "STOP_ORDER_FILLED",
+    "STOP_ORDER_OPENED",
+    "STOP_ORDER_ROLLED",
+    "UNKNOWN",
+    "WORKING_ORDER_DELETED",
 ]
 
 ActivityDirection = Literal["BUY", "SELL"]
@@ -86,8 +100,16 @@ class ActivityAction(BaseModel):
     trailingStep: Optional[Decimal] = None
     trailingStopDistance: Optional[Decimal] = None
 
-    @field_serializer('level', 'limitDistance', 'limitLevel', 'size', 
-                     'stopDistance', 'stopLevel', 'trailingStep', 'trailingStopDistance')
+    @field_serializer(
+        "level",
+        "limitDistance",
+        "limitLevel",
+        "size",
+        "stopDistance",
+        "stopLevel",
+        "trailingStep",
+        "trailingStopDistance",
+    )
     def serialize_decimal(self, value):
         return float(value) if value is not None else None
 

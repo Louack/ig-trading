@@ -11,6 +11,7 @@ from enum import Enum
 
 class IGErrorType(Enum):
     """Enumeration of IG API error types"""
+
     AUTHENTICATION = "authentication"
     AUTHORIZATION = "authorization"
     VALIDATION = "validation"
@@ -25,7 +26,7 @@ class IGErrorType(Enum):
 class IGAPIError(Exception):
     """
     Base exception for all IG Trading API errors.
-    
+
     Attributes:
         message: Human-readable error message
         error_type: Type of error (from IGErrorType enum)
@@ -34,7 +35,7 @@ class IGAPIError(Exception):
         details: Additional error details
         request_id: Request identifier for tracing
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -42,7 +43,7 @@ class IGAPIError(Exception):
         status_code: Optional[int] = None,
         error_code: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
-        request_id: Optional[str] = None
+        request_id: Optional[str] = None,
     ):
         self.message = message
         self.error_type = error_type
@@ -51,7 +52,7 @@ class IGAPIError(Exception):
         self.details = details or {}
         self.request_id = request_id
         super().__init__(self.message)
-    
+
     def __str__(self) -> str:
         base_msg = f"IG API Error ({self.error_type.value}): {self.message}"
         if self.status_code:
@@ -65,55 +66,55 @@ class IGAPIError(Exception):
 
 class IGAuthenticationError(IGAPIError):
     """Raised when authentication fails or session expires"""
-    
+
     def __init__(self, message: str = "Authentication failed", **kwargs):
         super().__init__(message, IGErrorType.AUTHENTICATION, **kwargs)
 
 
 class IGAuthorizationError(IGAPIError):
     """Raised when the user lacks permission for the requested operation"""
-    
+
     def __init__(self, message: str = "Insufficient permissions", **kwargs):
         super().__init__(message, IGErrorType.AUTHORIZATION, **kwargs)
 
 
 class IGValidationError(IGAPIError):
     """Raised when request validation fails"""
-    
+
     def __init__(self, message: str = "Request validation failed", **kwargs):
         super().__init__(message, IGErrorType.VALIDATION, **kwargs)
 
 
 class IGRateLimitError(IGAPIError):
     """Raised when rate limit is exceeded"""
-    
+
     def __init__(self, message: str = "Rate limit exceeded", **kwargs):
         super().__init__(message, IGErrorType.RATE_LIMIT, **kwargs)
 
 
 class IGNotFoundError(IGAPIError):
     """Raised when requested resource is not found"""
-    
+
     def __init__(self, message: str = "Resource not found", **kwargs):
         super().__init__(message, IGErrorType.NOT_FOUND, **kwargs)
 
 
 class IGServerError(IGAPIError):
     """Raised when server returns 5xx error"""
-    
+
     def __init__(self, message: str = "Server error", **kwargs):
         super().__init__(message, IGErrorType.SERVER_ERROR, **kwargs)
 
 
 class IGNetworkError(IGAPIError):
     """Raised when network-related errors occur"""
-    
+
     def __init__(self, message: str = "Network error", **kwargs):
         super().__init__(message, IGErrorType.NETWORK, **kwargs)
 
 
 class IGTimeoutError(IGAPIError):
     """Raised when request times out"""
-    
+
     def __init__(self, message: str = "Request timeout", **kwargs):
         super().__init__(message, IGErrorType.TIMEOUT, **kwargs)
