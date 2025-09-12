@@ -2,6 +2,7 @@ from api.auth import IGAuthenticator
 from api.clients.accounts import AccountsClient
 from api.clients.dealing import DealingClient
 from api.clients.markets import MarketsClient
+from api.clients.watchlists import WatchlistsClient
 from api.rest import IGRest
 
 
@@ -14,3 +15,4 @@ class IGClient:
         self.accounts = AccountsClient(rest=self.rest)
         self.markets = MarketsClient(rest=self.rest)
         self.dealing = DealingClient(rest=self.rest)
+        self.watchlists = WatchlistsClient(rest=self.rest)

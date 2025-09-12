@@ -4,23 +4,65 @@ from typing import List, Optional, Literal
 
 from pydantic import BaseModel, field_serializer
 
-from core.models.markets.ig_responses import Market
+# Import instrument and market types from markets
+from core.models.markets.ig_responses import InstrumentType, MarketStatus
+
+
+# Position specific direction type
+PositionDirection = Literal["BUY", "SELL"]
+
+
+class PositionMarket(BaseModel):
+    bid: Optional[Decimal] = None
+    delayTime: Optional[int] = None
+    epic: str
+    expiry: Optional[str] = None
+    high: Optional[Decimal] = None
+    instrumentName: str
+    instrumentType: InstrumentType
+    lotSize: Optional[Decimal] = None
+    low: Optional[Decimal] = None
+    marketStatus: Optional[MarketStatus] = None
+    netChange: Optional[Decimal] = None
+    offer: Optional[Decimal] = None
+    percentageChange: Optional[Decimal] = None
+    scalingFactor: Optional[Decimal] = None
+    streamingPricesAvailable: Optional[bool] = None
+    updateTime: Optional[str] = None
+    updateTimeUTC: Optional[str] = None
+
+    @field_serializer('bid', 'high', 'lotSize', 'low', 'netChange', 'offer', 
+                     'percentageChange', 'scalingFactor')
+    def serialize_decimal(self, value):
+        return float(value) if value is not None else None
 
 
 class PositionDetail(BaseModel):
-    dealId: str
     contractSize: Decimal
-    createdDateUTC: datetime
-    direction: str
-    limitLevel: Optional[Decimal]
-    stopLevel: Optional[Decimal]
-    level: Decimal
+    controlledRisk: Optional[bool] = None
+    createdDate: Optional[str] = None
+    createdDateUTC: Optional[str] = None
     currency: str
+    dealId: str
+    dealReference: Optional[str] = None
+    direction: PositionDirection
+    level: Decimal
+    limitLevel: Optional[Decimal] = None
+    limitedRiskPremium: Optional[Decimal] = None
+    size: Decimal
+    stopLevel: Optional[Decimal] = None
+    trailingStep: Optional[Decimal] = None
+    trailingStopDistance: Optional[Decimal] = None
+
+    @field_serializer('contractSize', 'level', 'limitLevel', 'limitedRiskPremium', 
+                     'size', 'stopLevel', 'trailingStep', 'trailingStopDistance')
+    def serialize_decimal(self, value):
+        return float(value) if value is not None else None
 
 
 class Position(BaseModel):
     position: PositionDetail
-    market: Market
+    market: PositionMarket
 
 
 class Positions(BaseModel):
@@ -148,3 +190,88 @@ class DealConfirmation(BaseModel):
         if value is not None:
             return float(value)
         return value
+
+
+class UpdateOtcPositionResponse(BaseModel):
+    dealReference: str
+
+
+# Working Orders Models
+Direction = Literal["BUY", "SELL"]
+WorkingOrderType = Literal["LIMIT", "STOP"]
+TimeInForce = Literal["GOOD_TILL_CANCELLED", "GOOD_TILL_DATE"]
+
+# Import InstrumentType and MarketStatus from markets
+from core.models.markets.ig_responses import InstrumentType, MarketStatus
+
+
+class WorkingOrderMarketData(BaseModel):
+    bid: Optional[Decimal] = None
+    delayTime: Optional[int] = None
+    epic: str
+    exchangeId: Optional[str] = None
+    expiry: Optional[str] = None
+    high: Optional[Decimal] = None
+    instrumentName: str
+    instrumentType: InstrumentType
+    lotSize: Optional[Decimal] = None
+    low: Optional[Decimal] = None
+    marketStatus: Optional[MarketStatus] = None
+    netChange: Optional[Decimal] = None
+    offer: Optional[Decimal] = None
+    percentageChange: Optional[Decimal] = None
+    scalingFactor: Optional[Decimal] = None
+    streamingPricesAvailable: Optional[bool] = None
+    updateTime: Optional[str] = None
+    updateTimeUTC: Optional[str] = None
+
+    @field_serializer('bid', 'high', 'lotSize', 'low', 'netChange', 'offer', 
+                     'percentageChange', 'scalingFactor')
+    def serialize_decimal(self, value):
+        return float(value) if value is not None else None
+
+
+class WorkingOrderData(BaseModel):
+    createdDate: Optional[str] = None
+    createdDateUTC: Optional[str] = None
+    currencyCode: str
+    dealId: str
+    direction: Direction
+    dma: Optional[bool] = None
+    epic: str
+    goodTillDate: Optional[str] = None
+    goodTillDateISO: Optional[str] = None
+    guaranteedStop: Optional[bool] = None
+    limitDistance: Optional[Decimal] = None
+    limitedRiskPremium: Optional[Decimal] = None
+    orderLevel: Decimal
+    orderSize: Decimal
+    orderType: WorkingOrderType
+    stopDistance: Optional[Decimal] = None
+    timeInForce: Optional[TimeInForce] = None
+
+    @field_serializer('limitDistance', 'limitedRiskPremium', 'orderLevel', 
+                     'orderSize', 'stopDistance')
+    def serialize_decimal(self, value):
+        return float(value) if value is not None else None
+
+
+class WorkingOrder(BaseModel):
+    marketData: WorkingOrderMarketData
+    workingOrderData: WorkingOrderData
+
+
+class WorkingOrdersResponse(BaseModel):
+    workingOrders: List[WorkingOrder]
+
+
+class CreateWorkingOrderResponse(BaseModel):
+    dealReference: str
+
+
+class DeleteWorkingOrderResponse(BaseModel):
+    dealReference: str
+
+
+class UpdateWorkingOrderResponse(BaseModel):
+    dealReference: str

@@ -26,9 +26,9 @@ class IGRest:
             method="PUT", endpoint=endpoint, version=version, json=data, **kwargs
         )
 
-    def delete(self, endpoint: str, version: str, **kwargs):
+    def delete(self, endpoint: str, version: str, data=None, **kwargs):
         return self._request(
-            method="DELETE", endpoint=endpoint, version=version, **kwargs
+            method="DELETE", endpoint=endpoint, version=version, json=data, **kwargs
         )
 
     def _request(self, method: str, endpoint: str, version: str, **kwargs):
