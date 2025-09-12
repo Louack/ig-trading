@@ -7,7 +7,7 @@ from functools import wraps
 from typing import Callable, Type, Tuple, Any
 from pydantic import ValidationError
 
-from core.exceptions import (
+from api_gateway.ig_client.core.exceptions import (
     IGAPIError,
     IGValidationError,
     IGNotFoundError,

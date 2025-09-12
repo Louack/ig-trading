@@ -1,14 +1,13 @@
 import logging
 from typing import Dict, Any
-from pydantic import ValidationError
 
-from api.rest import IGRest
-from api.error_handling import (
+from api_gateway.ig_client.rest import IGRest
+from api_gateway.ig_client.error_handling import (
     handle_api_errors,
     handle_validation_errors,
     handle_response_parsing,
 )
-from core.models.account.ig_responses import (
+from api_gateway.ig_client.core.models.account.ig_responses import (
     Accounts,
     AccountPreferences,
     UpdatePreferencesResponse,
@@ -16,10 +15,9 @@ from core.models.account.ig_responses import (
     ActivitiesByDateRangeResponse,
     TransactionsResponse,
 )
-from core.models.account.request_bodies import UpdateAccountPreferencesRequest
-from core.models.account.query_params import TransactionHistoryQueryParams
-from core.validators import PathValidators
-from core.exceptions import IGValidationError
+from api_gateway.ig_client.core.models.account.request_bodies import UpdateAccountPreferencesRequest
+from api_gateway.ig_client.core.models.account.query_params import TransactionHistoryQueryParams
+from api_gateway.ig_client.core.validators import PathValidators
 
 logger = logging.getLogger(__name__)
 

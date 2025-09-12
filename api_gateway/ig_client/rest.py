@@ -1,10 +1,10 @@
 import httpx
 import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-from api.auth import IGAuthenticator
-from core.exceptions import (
+from api_gateway.ig_client.auth import IGAuthenticator
+from api_gateway.ig_client.core.exceptions import (
     IGAPIError,
     IGAuthenticationError,
     IGAuthorizationError,
@@ -14,7 +14,6 @@ from core.exceptions import (
     IGServerError,
     IGNetworkError,
     IGTimeoutError,
-    IGErrorType,
 )
 
 logger = logging.getLogger(__name__)

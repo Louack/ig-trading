@@ -3,8 +3,7 @@ Centralized validation for path parameters and common data types.
 """
 
 import re
-from typing import Any
-from core.exceptions import IGValidationError
+from api_gateway.ig_client.core.exceptions import IGValidationError
 
 
 class PathValidators:

@@ -4,10 +4,9 @@ Tests basic functionality without creating/modifying data.
 """
 
 import logging
-from datetime import datetime, timedelta
-from api.ig_client import IGClient
+from api_gateway.ig_client.master_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
-from core.logging_config import setup_logging
+from api_gateway.ig_client.core.logging_config import setup_logging
 
 # Setup logging
 setup_logging(level="WARNING")  # Less verbose for quick tests

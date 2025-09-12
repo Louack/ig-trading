@@ -1,6 +1,6 @@
 import httpx
 
-from core.exceptions import IGAuthenticationError
+from api_gateway.ig_client.core.exceptions import IGAuthenticationError
 
 
 class IGAuthenticator:

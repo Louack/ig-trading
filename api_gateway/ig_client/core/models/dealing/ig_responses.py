@@ -1,11 +1,10 @@
-from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional, Literal
 
 from pydantic import BaseModel, field_serializer
 
 # Import instrument and market types from markets
-from core.models.markets.ig_responses import InstrumentType, MarketStatus
+from api_gateway.ig_client.core.models.markets.ig_responses import InstrumentType, MarketStatus
 
 
 # Position specific direction type
@@ -218,7 +217,7 @@ WorkingOrderType = Literal["LIMIT", "STOP"]
 TimeInForce = Literal["GOOD_TILL_CANCELLED", "GOOD_TILL_DATE"]
 
 # Import InstrumentType and MarketStatus from markets
-from core.models.markets.ig_responses import InstrumentType, MarketStatus
+from api_gateway.ig_client.core.models.markets.ig_responses import InstrumentType, MarketStatus
 
 
 class WorkingOrderMarketData(BaseModel):

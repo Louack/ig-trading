@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
-from api.rest import IGRest
-from core.models.markets.ig_responses import (
+from api_gateway.ig_client.rest import IGRest
+from api_gateway.ig_client.core.models.markets.ig_responses import (
     MarketsResponse,
     SingleMarketDetails,
     HistoricalPricesResponse,

@@ -1,9 +1,6 @@
-from api.auth import IGAuthenticator
-from api.clients.accounts import AccountsClient
-from api.clients.dealing import DealingClient
-from api.clients.markets import MarketsClient
-from api.clients.watchlists import WatchlistsClient
-from api.rest import IGRest
+from api_gateway.ig_client.auth import IGAuthenticator
+from api_gateway.ig_client.clients import AccountsClient, DealingClient, MarketsClient, WatchlistsClient
+from api_gateway.ig_client.rest import IGRest
 
 
 class IGClient:

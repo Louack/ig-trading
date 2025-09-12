@@ -5,16 +5,11 @@ Tests both successful operations and validation errors.
 
 import logging
 from datetime import datetime, timedelta
-from api.ig_client import IGClient
+from api_gateway.ig_client.master_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
-from core.logging_config import setup_logging
-from core.exceptions import (
-    IGAuthenticationError,
+from api_gateway.ig_client.core.logging_config import setup_logging
+from api_gateway.ig_client.core import (
     IGValidationError,
-    IGRateLimitError,
-    IGNotFoundError,
-    IGServerError,
-    IGAPIError,
 )
 
 # Setup logging

@@ -1,8 +1,14 @@
 import logging
-from api.ig_client import IGClient
+import sys
+import os
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from api_gateway.ig_client.master_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
-from core.logging_config import setup_logging, error_tracker
-from core.exceptions import (
+from api_gateway.ig_client.core.logging_config import setup_logging, error_tracker
+from api_gateway.ig_client.core import (
     IGAuthenticationError,
     IGValidationError,
     IGRateLimitError,

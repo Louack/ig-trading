@@ -1,13 +1,13 @@
 from typing import Dict, Any
 
-from api.rest import IGRest
-from api.error_handling import (
+from api_gateway.ig_client.rest import IGRest
+from api_gateway.ig_client.error_handling import (
     handle_api_errors,
     handle_validation_errors,
     handle_response_parsing,
 )
-from core.validators import PathValidators
-from core.models.dealing.ig_responses import (
+from api_gateway.ig_client.core.validators import PathValidators
+from api_gateway.ig_client.core.models.dealing.ig_responses import (
     Positions,
     Position,
     CreateOtcPositionResponse,
@@ -19,7 +19,7 @@ from core.models.dealing.ig_responses import (
     DeleteWorkingOrderResponse,
     UpdateWorkingOrderResponse,
 )
-from core.models.dealing.request_bodies import (
+from api_gateway.ig_client.core.models.dealing.request_bodies import (
     CreateOtcPositionRequest,
     CloseOtcPositionRequest,
     UpdateOtcPositionRequest,
