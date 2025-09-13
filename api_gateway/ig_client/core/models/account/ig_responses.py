@@ -45,7 +45,7 @@ class AccountPreferences(BaseModel):
 PreferencesUpdateStatus = Literal["SUCCESS"]
 
 
-class UpdatePreferencesResponse(BaseModel):
+class UpdatePreferences(BaseModel):
     status: PreferencesUpdateStatus
 
 
@@ -139,7 +139,7 @@ class Activity(BaseModel):
     type: ActivityType
 
 
-class ActivitiesResponse(BaseModel):
+class Activities(BaseModel):
     activities: List[Activity]
     metadata: Metadata
 
@@ -165,7 +165,7 @@ class ActivityByDateRange(BaseModel):
     time: str
 
 
-class ActivitiesByDateRangeResponse(BaseModel):
+class ActivitiesByDateRange(BaseModel):
     activities: List[ActivityByDateRange]
 
 
@@ -197,6 +197,6 @@ class TransactionMetadata(BaseModel):
     pageData: TransactionPageData
 
 
-class TransactionsResponse(BaseModel):
+class Transactions(BaseModel):
     metadata: TransactionMetadata
     transactions: List[Transaction]

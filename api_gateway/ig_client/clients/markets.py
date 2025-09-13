@@ -2,10 +2,10 @@ from typing import Dict, Any
 
 from api_gateway.ig_client.rest import IGRest
 from api_gateway.ig_client.core.models.markets.ig_responses import (
-    MarketsResponse,
+    Markets,
     SingleMarketDetails,
-    HistoricalPricesResponse,
-    SimpleHistoricalPricesResponse,
+    HistoricalPrices,
+    SimpleHistoricalPrices,
 )
 
 
@@ -13,42 +13,37 @@ class MarketsClient:
     def __init__(self, rest: IGRest):
         self.rest = rest
 
-    def get_markets(self, epics: str, filter_type: str = "ALL") -> Dict[str, Any]:
+    def get_markets(self, epics: str, filter_type: str = "ALL") -> Markets:
         params = {"epics": epics, "filter": filter_type}
         json = self.rest.get(endpoint="/markets", version="2", params=params)
-        response = MarketsResponse(**json)
-        return response.model_dump()
+        return Markets(**json)
 
-    def get_market(self, epic: str) -> Dict[str, Any]:
+    def get_market(self, epic: str) -> SingleMarketDetails:
         json = self.rest.get(endpoint=f"/markets/{epic}", version="4")
-        response = SingleMarketDetails(**json)
-        return response.model_dump()
+        return SingleMarketDetails(**json)
 
     def get_prices(
         self, epic: str, query_params: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    ) -> HistoricalPrices:
         if query_params is None:
             query_params = {}
         json = self.rest.get(
             endpoint=f"/prices/{epic}", version="3", params=query_params
         )
-        response = HistoricalPricesResponse(**json)
-        return response.model_dump()
+        return HistoricalPrices(**json)
 
     def get_prices_by_points(
         self, epic: str, resolution: str, num_points: int
-    ) -> Dict[str, Any]:
+    ) -> SimpleHistoricalPrices:
         json = self.rest.get(
             endpoint=f"/prices/{epic}/{resolution}/{num_points}", version="2"
         )
-        response = SimpleHistoricalPricesResponse(**json)
-        return response.model_dump()
+        return SimpleHistoricalPrices(**json)
 
     def get_prices_by_date_range(
         self, epic: str, resolution: str, start_date: str, end_date: str
-    ) -> Dict[str, Any]:
+    ) -> SimpleHistoricalPrices:
         json = self.rest.get(
             endpoint=f"/prices/{epic}/{resolution}/{start_date}/{end_date}", version="2"
         )
-        response = SimpleHistoricalPricesResponse(**json)
-        return response.model_dump()
+        return SimpleHistoricalPrices(**json)

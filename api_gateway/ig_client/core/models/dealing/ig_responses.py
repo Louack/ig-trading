@@ -84,11 +84,11 @@ class Positions(BaseModel):
     positions: List[Position]
 
 
-class CreateOtcPositionResponse(BaseModel):
+class CreateOtcPosition(BaseModel):
     dealReference: str
 
 
-class CloseOtcPositionResponse(BaseModel):
+class CloseOtcPosition(BaseModel):
     dealReference: str
 
 
@@ -207,7 +207,7 @@ class DealConfirmation(BaseModel):
         return value
 
 
-class UpdateOtcPositionResponse(BaseModel):
+class UpdateOtcPosition(BaseModel):
     dealReference: str
 
 
@@ -285,17 +285,17 @@ class WorkingOrder(BaseModel):
     workingOrderData: WorkingOrderData
 
 
-class WorkingOrdersResponse(BaseModel):
+class WorkingOrders(BaseModel):
     workingOrders: List[WorkingOrder]
 
 
-class CreateWorkingOrderResponse(BaseModel):
+class CreateWorkingOrder(BaseModel):
     dealReference: str
 
 
-class DeleteWorkingOrderResponse(BaseModel):
+class DeleteWorkingOrder(BaseModel):
     dealReference: str
 
 
-class UpdateWorkingOrderResponse(BaseModel):
+class UpdateWorkingOrder(BaseModel):
     dealReference: str

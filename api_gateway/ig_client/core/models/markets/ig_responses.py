@@ -276,7 +276,7 @@ class MarketDetails(BaseModel):
     snapshot: MarketSnapshot
 
 
-class MarketsResponse(BaseModel):
+class Markets(BaseModel):
     marketDetails: List[MarketDetails]
 
 
@@ -418,14 +418,14 @@ class Metadata(BaseModel):
     allowance: Allowance
 
 
-class HistoricalPricesResponse(BaseModel):
+class HistoricalPrices(BaseModel):
     instrumentType: InstrumentType
     metadata: Metadata
     prices: List[HistoricalPrice]
 
 
 # Simplified Historical Prices Models (for /prices/{epic}/{resolution}/{numPoints})
-class SimpleHistoricalPricesResponse(BaseModel):
+class SimpleHistoricalPrices(BaseModel):
     allowance: Allowance
     instrumentType: InstrumentType
     prices: List[HistoricalPrice]

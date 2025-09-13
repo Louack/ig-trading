@@ -11,7 +11,7 @@ class Watchlist(BaseModel):
     name: str
 
 
-class WatchlistsResponse(BaseModel):
+class Watchlists(BaseModel):
     watchlists: List[Watchlist]
 
 
@@ -88,7 +88,7 @@ class WatchlistMarket(BaseModel):
         return float(value) if value is not None else None
 
 
-class WatchlistDetailsResponse(BaseModel):
+class WatchlistDetails(BaseModel):
     markets: List[WatchlistMarket]
 
 
@@ -96,15 +96,15 @@ class WatchlistDetailsResponse(BaseModel):
 WatchlistOperationStatus = Literal["SUCCESS"]
 
 
-class DeleteWatchlistResponse(BaseModel):
+class DeleteWatchlist(BaseModel):
     status: WatchlistOperationStatus
 
 
-class AddMarketToWatchlistResponse(BaseModel):
+class AddMarketToWatchlist(BaseModel):
     status: WatchlistOperationStatus
 
 
-class RemoveMarketFromWatchlistResponse(BaseModel):
+class RemoveMarketFromWatchlist(BaseModel):
     status: WatchlistOperationStatus
 
 
@@ -112,6 +112,6 @@ class RemoveMarketFromWatchlistResponse(BaseModel):
 CreateWatchlistStatus = Literal["SUCCESS", "SUCCESS_NOT_ALL_INSTRUMENTS_ADDED"]
 
 
-class CreateWatchlistResponse(BaseModel):
+class CreateWatchlist(BaseModel):
     status: CreateWatchlistStatus
     watchlistId: Optional[str] = None
