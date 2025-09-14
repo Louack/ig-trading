@@ -71,10 +71,11 @@ class DealingClient:
     @handle_response_parsing("close_position_otc")
     def close_position_otc(self, body_data: Dict[str, Any]) -> CloseOtcPosition:
         validated_request = CloseOtcPositionRequest(**body_data)
-        json = self.rest.delete(
+        json = self.rest.post(
             endpoint="/positions/otc",
             version="1",
             data=validated_request.model_dump(exclude_none=True),
+            override_method="DELETE"
         )
         return CloseOtcPosition(**json)
 

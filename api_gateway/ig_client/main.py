@@ -186,4 +186,28 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    account_type = "demo"
+    client = IGClient(
+        base_url=BASE_URLS[account_type],
+        api_key=API_KEYS[account_type],
+        identifier=IDENTIFIERS[account_type],
+        password=PASSWORDS[account_type],
+    )
+
+    logger.info("IG Client initialized successfully")
+
+    positions = client.dealing.get_positions()
+    print(positions)
+
+    logger.info(f"{len(positions.positions)} position(s)")
+    for position in positions.positions:
+        logger.info(f"Position 1: dealID '{position.position.dealId}'")
+
+    position = positions.positions[0].position
+    deleted = client.dealing.close_position_otc(body_data={
+        "dealId": position.dealId,
+        "direction": "SELL",
+        "orderType": "MARKET",
+        "size": 1
+    })
+    print(deleted)

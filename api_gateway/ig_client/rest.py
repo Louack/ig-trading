@@ -48,8 +48,11 @@ class IGRest:
         )
 
     def _request(self, method: str, endpoint: str, version: str, **kwargs):
+        override_method = kwargs.pop("override_method", "")  # Remove from kwargs
         headers = self.auth_session.get_headers()
         headers["VERSION"] = version
+        if override_method:
+            headers["_method"] = override_method
 
         logger.debug(
             "Making API request",
