@@ -2,6 +2,8 @@ import logging
 import sys
 import os
 
+from api_gateway.ig_client.utils import create_position_and_wait_for_confirmation
+
 # Add the project root to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -196,6 +198,20 @@ if __name__ == "__main__":
 
     logger.info("IG Client initialized successfully")
 
+    body_data = {
+        "currencyCode": "EUR",
+        "direction": "BUY",
+        "epic": "CS.D.BITCOIN.CFE.IP",
+        "expiry": "-",
+        "forceOpen": True,
+        "guaranteedStop": False,
+        "orderType": "MARKET",
+        "size": 1,
+    }
+
+    created = create_position_and_wait_for_confirmation(body_data=body_data, dealing_client=client.dealing)
+    print(created)
+
     positions = client.dealing.get_positions()
     print(positions)
 
@@ -203,13 +219,13 @@ if __name__ == "__main__":
     for position in positions.positions:
         logger.info(f"Position 1: dealID '{position.position.dealId}'")
 
-    position = positions.positions[0].position
-    deleted = client.dealing.close_position_otc(
-        body_data={
-            "dealId": position.dealId,
-            "direction": "SELL",
-            "orderType": "MARKET",
-            "size": 1,
-        }
-    )
-    print(deleted)
+    # position = positions.positions[0].position
+    # deleted = client.dealing.close_position_otc(
+    #     body_data={
+    #         "dealId": position.dealId,
+    #         "direction": "SELL",
+    #         "orderType": "MARKET",
+    #         "size": 1,
+    #     }
+    # )
+    # print(deleted)

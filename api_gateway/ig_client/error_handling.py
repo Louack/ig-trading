@@ -12,6 +12,11 @@ from api_gateway.ig_client.core.exceptions import (
     IGValidationError,
     IGNotFoundError,
     IGAuthenticationError,
+    IGAuthorizationError,
+    IGRateLimitError,
+    IGServerError,
+    IGNetworkError,
+    IGTimeoutError,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,12 +45,8 @@ def handle_api_errors(operation_name: str = None):
                 logger.error(f"Validation error in {op_name}: {e}")
                 raise IGValidationError(f"Invalid {op_name} request/response: {str(e)}")
 
-            except IGAuthenticationError:
-                logger.error(f"Authentication failed in {op_name}")
-                raise
-
-            except IGValidationError:
-                # Re-raise validation errors as-is
+            except (IGAuthenticationError, IGAuthorizationError, IGValidationError, 
+                    IGRateLimitError, IGNotFoundError, IGServerError, IGNetworkError, IGTimeoutError):
                 raise
 
             except Exception as e:
