@@ -10,14 +10,9 @@ from api_gateway.ig_client.core.validators import PathValidators
 from api_gateway.ig_client.core.models.dealing.ig_responses import (
     Positions,
     Position,
-    CreateOtcPosition,
     DealConfirmation,
-    CloseOtcPosition,
-    UpdateOtcPosition,
     WorkingOrders,
-    CreateWorkingOrder,
-    DeleteWorkingOrder,
-    UpdateWorkingOrder,
+    PendingDeal
 )
 from api_gateway.ig_client.core.models.dealing.request_bodies import (
     CreateOtcPositionRequest,
@@ -49,14 +44,14 @@ class DealingClient:
     @handle_api_errors("create_position_otc")
     @handle_validation_errors("create_position_otc")
     @handle_response_parsing("create_position_otc")
-    def create_position_otc(self, body_data: Dict[str, Any]) -> CreateOtcPosition:
+    def create_position_otc(self, body_data: Dict[str, Any]) -> PendingDeal:
         validated_request = CreateOtcPositionRequest(**body_data)
         json = self.rest.post(
             endpoint="/positions/otc",
             version="2",
             data=validated_request.model_dump(exclude_none=True),
         )
-        return CreateOtcPosition(**json)
+        return PendingDeal(**json)
 
     @handle_api_errors("get_deal_confirmation")
     @handle_response_parsing("get_deal_confirmation")
@@ -69,7 +64,7 @@ class DealingClient:
     @handle_api_errors("close_position_otc")
     @handle_validation_errors("close_position_otc")
     @handle_response_parsing("close_position_otc")
-    def close_position_otc(self, body_data: Dict[str, Any]) -> CloseOtcPosition:
+    def close_position_otc(self, body_data: Dict[str, Any]) -> PendingDeal:
         validated_request = CloseOtcPositionRequest(**body_data)
         json = self.rest.post(
             endpoint="/positions/otc",
@@ -77,14 +72,14 @@ class DealingClient:
             data=validated_request.model_dump(exclude_none=True),
             override_method="DELETE"
         )
-        return CloseOtcPosition(**json)
+        return PendingDeal(**json)
 
     @handle_api_errors("update_position_otc")
     @handle_validation_errors("update_position_otc")
     @handle_response_parsing("update_position_otc")
     def update_position_otc(
         self, deal_id: str, body_data: Dict[str, Any]
-    ) -> UpdateOtcPosition:
+    ) -> PendingDeal:
         PathValidators.validate_deal_id(deal_id)
 
         validated_request = UpdateOtcPositionRequest(**body_data)
@@ -93,19 +88,19 @@ class DealingClient:
             version="2",
             data=validated_request.model_dump(exclude_none=True),
         )
-        return UpdateOtcPosition(**json)
+        return PendingDeal(**json)
 
     @handle_api_errors("create_working_order_otc")
     @handle_validation_errors("create_working_order_otc")
     @handle_response_parsing("create_working_order_otc")
-    def create_working_order_otc(self, body_data: Dict[str, Any]) -> CreateWorkingOrder:
+    def create_working_order_otc(self, body_data: Dict[str, Any]) -> PendingDeal:
         validated_request = CreateWorkingOrderRequest(**body_data)
         json = self.rest.post(
             endpoint="/workingorders/otc",
             version="2",
             data=validated_request.model_dump(exclude_none=True),
         )
-        return CreateWorkingOrder(**json)
+        return PendingDeal(**json)
 
     @handle_api_errors("get_working_orders")
     @handle_response_parsing("get_working_orders")
@@ -115,18 +110,18 @@ class DealingClient:
 
     @handle_api_errors("delete_working_order_otc")
     @handle_response_parsing("delete_working_order_otc")
-    def delete_working_order_otc(self, deal_id: str) -> DeleteWorkingOrder:
+    def delete_working_order_otc(self, deal_id: str) -> PendingDeal:
         PathValidators.validate_deal_id(deal_id)
 
         json = self.rest.delete(endpoint=f"/workingorders/otc/{deal_id}", version="2")
-        return DeleteWorkingOrder(**json)
+        return PendingDeal(**json)
 
     @handle_api_errors("update_working_order_otc")
     @handle_validation_errors("update_working_order_otc")
     @handle_response_parsing("update_working_order_otc")
     def update_working_order_otc(
         self, deal_id: str, body_data: Dict[str, Any]
-    ) -> UpdateWorkingOrder:
+    ) -> PendingDeal:
         PathValidators.validate_deal_id(deal_id)
 
         validated_request = UpdateWorkingOrderRequest(**body_data)
@@ -135,4 +130,4 @@ class DealingClient:
             version="2",
             data=validated_request.model_dump(exclude_none=True),
         )
-        return UpdateWorkingOrder(**json)
+        return PendingDeal(**json)

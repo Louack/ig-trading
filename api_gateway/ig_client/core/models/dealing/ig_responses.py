@@ -84,11 +84,7 @@ class Positions(BaseModel):
     positions: List[Position]
 
 
-class CreateOtcPosition(BaseModel):
-    dealReference: str
-
-
-class CloseOtcPosition(BaseModel):
+class PendingDeal(BaseModel):
     dealReference: str
 
 
@@ -207,10 +203,6 @@ class DealConfirmation(BaseModel):
         return value
 
 
-class UpdateOtcPosition(BaseModel):
-    dealReference: str
-
-
 # Working Orders Models
 Direction = Literal["BUY", "SELL"]
 WorkingOrderType = Literal["LIMIT", "STOP"]
@@ -287,15 +279,3 @@ class WorkingOrder(BaseModel):
 
 class WorkingOrders(BaseModel):
     workingOrders: List[WorkingOrder]
-
-
-class CreateWorkingOrder(BaseModel):
-    dealReference: str
-
-
-class DeleteWorkingOrder(BaseModel):
-    dealReference: str
-
-
-class UpdateWorkingOrder(BaseModel):
-    dealReference: str
