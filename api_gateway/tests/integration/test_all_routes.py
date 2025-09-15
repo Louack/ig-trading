@@ -142,7 +142,7 @@ class RouteTester:
         positions = self.test_route("GET /positions", self.client.dealing.get_positions)
 
         # Test 2: Get specific position (if we have positions)
-        if positions and hasattr(positions, 'positions') and positions.positions:
+        if positions and hasattr(positions, "positions") and positions.positions:
             first_position = positions.positions[0]
             deal_id = first_position.position.dealId
             self.test_route(
@@ -176,7 +176,11 @@ class RouteTester:
         )
 
         # Test 5: Get deal confirmation (if position was created)
-        if created_position and hasattr(created_position, 'dealReference') and created_position.dealReference:
+        if (
+            created_position
+            and hasattr(created_position, "dealReference")
+            and created_position.dealReference
+        ):
             deal_ref = created_position.dealReference
             self.test_route(
                 "GET /confirms/{dealReference}",
@@ -197,7 +201,11 @@ class RouteTester:
         )
 
         # Test 7: Close/Delete position (if position was created)
-        if created_position and hasattr(created_position, 'dealId') and created_position.dealId:
+        if (
+            created_position
+            and hasattr(created_position, "dealId")
+            and created_position.dealId
+        ):
             close_position_data = {
                 "dealId": created_position.dealId,
                 "direction": "SELL",  # Opposite direction to close
@@ -235,7 +243,11 @@ class RouteTester:
         )
 
         # Test 10: Update working order (if order was created)
-        if created_order and hasattr(created_order, 'dealReference') and created_order.dealReference:
+        if (
+            created_order
+            and hasattr(created_order, "dealReference")
+            and created_order.dealReference
+        ):
             # We'll use a dummy deal ID for testing the validation
             self.test_route(
                 "PUT /workingorders/otc/{dealId} (invalid ID)",
@@ -347,7 +359,11 @@ class RouteTester:
         )
 
         # Test 3: Get specific watchlist (if created)
-        if created_watchlist and hasattr(created_watchlist, 'watchlistId') and created_watchlist.watchlistId:
+        if (
+            created_watchlist
+            and hasattr(created_watchlist, "watchlistId")
+            and created_watchlist.watchlistId
+        ):
             watchlist_id = created_watchlist.watchlistId
             self.test_route(
                 "GET /watchlists/{watchlistId}",

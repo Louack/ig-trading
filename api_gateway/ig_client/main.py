@@ -3,7 +3,7 @@ import sys
 import os
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from api_gateway.ig_client.master_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
@@ -204,10 +204,12 @@ if __name__ == "__main__":
         logger.info(f"Position 1: dealID '{position.position.dealId}'")
 
     position = positions.positions[0].position
-    deleted = client.dealing.close_position_otc(body_data={
-        "dealId": position.dealId,
-        "direction": "SELL",
-        "orderType": "MARKET",
-        "size": 1
-    })
+    deleted = client.dealing.close_position_otc(
+        body_data={
+            "dealId": position.dealId,
+            "direction": "SELL",
+            "orderType": "MARKET",
+            "size": 1,
+        }
+    )
     print(deleted)

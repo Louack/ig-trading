@@ -28,20 +28,23 @@ class TestPathValidators:
         invalid_epic = "SHORT"  # Too short (5 chars)
         with pytest.raises(IGValidationError) as exc_info:
             PathValidators.validate_epic(invalid_epic)
-        
+
         assert "Invalid epic format" in str(exc_info.value)
         assert invalid_epic in str(exc_info.value)
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("epic", [
-        "IX.D.NASDAQ.IFE.IP",
-        "CS.D.EURGBP.CFD.IP",
-        "CS.D.GBPUSD.CFD.IP",
-        "IX.D.FTSE.IFE.IP",
-        "CC.D.CRUDEOIL.CFD.IP",
-        "CS.D.AUDUSD.CFD.IP"
-    ])
+    @pytest.mark.parametrize(
+        "epic",
+        [
+            "IX.D.NASDAQ.IFE.IP",
+            "CS.D.EURGBP.CFD.IP",
+            "CS.D.GBPUSD.CFD.IP",
+            "IX.D.FTSE.IFE.IP",
+            "CC.D.CRUDEOIL.CFD.IP",
+            "CS.D.AUDUSD.CFD.IP",
+        ],
+    )
     def test_validate_epic_valid_cases(self, epic):
         """Test various valid epic formats."""
         result = PathValidators.validate_epic(epic)
@@ -49,16 +52,19 @@ class TestPathValidators:
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("epic", [
-        "SHORT",  # Too short (5 chars)
-        "THIS_EPIC_IS_WAY_TOO_LONG_AND_EXCEEDS_THE_MAXIMUM_LENGTH",  # Too long (58 chars)
-        "invalid@epic",  # Invalid character @
-        "epic with spaces",  # Spaces not allowed
-        "epic-with-dashes",  # Dashes not allowed
-        "",  # Empty string
-        "123",  # Too short
-        "EPIC.WITH.SPECIAL.CHARS!"  # Invalid character !
-    ])
+    @pytest.mark.parametrize(
+        "epic",
+        [
+            "SHORT",  # Too short (5 chars)
+            "THIS_EPIC_IS_WAY_TOO_LONG_AND_EXCEEDS_THE_MAXIMUM_LENGTH",  # Too long (58 chars)
+            "invalid@epic",  # Invalid character @
+            "epic with spaces",  # Spaces not allowed
+            "epic-with-dashes",  # Dashes not allowed
+            "",  # Empty string
+            "123",  # Too short
+            "EPIC.WITH.SPECIAL.CHARS!",  # Invalid character !
+        ],
+    )
     def test_validate_epic_invalid_cases(self, epic):
         """Test various invalid epic formats."""
         with pytest.raises(IGValidationError):
@@ -77,19 +83,22 @@ class TestPathValidators:
         """Test invalid deal ID validation."""
         with pytest.raises(IGValidationError) as exc_info:
             PathValidators.validate_deal_id(invalid_deal_id)
-        
+
         assert "Invalid deal ID format" in str(exc_info.value)
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("deal_id", [
-        "DIAAAAUZTYEFZAH",
-        "DI123456789",
-        "A",
-        "123456789012345678901234567890",  # 30 chars
-        "DEAL_ID_WITH_UNDERSCORES",
-        "deal-with-dashes"
-    ])
+    @pytest.mark.parametrize(
+        "deal_id",
+        [
+            "DIAAAAUZTYEFZAH",
+            "DI123456789",
+            "A",
+            "123456789012345678901234567890",  # 30 chars
+            "DEAL_ID_WITH_UNDERSCORES",
+            "deal-with-dashes",
+        ],
+    )
     def test_validate_deal_id_valid_cases(self, deal_id):
         """Test various valid deal ID formats."""
         result = PathValidators.validate_deal_id(deal_id)
@@ -97,10 +106,13 @@ class TestPathValidators:
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("deal_id", [
-        "",  # Empty string
-        "1234567890123456789012345678901",  # 31 chars - too long
-    ])
+    @pytest.mark.parametrize(
+        "deal_id",
+        [
+            "",  # Empty string
+            "1234567890123456789012345678901",  # 31 chars - too long
+        ],
+    )
     def test_validate_deal_id_invalid_cases(self, deal_id):
         """Test various invalid deal ID formats."""
         with pytest.raises(IGValidationError):
@@ -137,18 +149,21 @@ class TestPathValidators:
         """Test invalid date format validation."""
         with pytest.raises(IGValidationError) as exc_info:
             PathValidators.validate_date_format(invalid_date)
-        
+
         assert "Invalid date format" in str(exc_info.value)
         assert "dd-mm-yyyy" in str(exc_info.value)
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("date_str", [
-        "01-01-2024",
-        "31-12-2023",
-        "15-06-2024",
-        "29-02-2024"  # Leap year
-    ])
+    @pytest.mark.parametrize(
+        "date_str",
+        [
+            "01-01-2024",
+            "31-12-2023",
+            "15-06-2024",
+            "29-02-2024",  # Leap year
+        ],
+    )
     def test_validate_date_format_valid_cases(self, date_str):
         """Test various valid date formats."""
         result = PathValidators.validate_date_format(date_str)
@@ -156,15 +171,18 @@ class TestPathValidators:
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("date_str", [
-        "2024-01-01",  # Wrong format
-        "01/01/2024",  # Wrong separator
-        "1-1-2024",    # Missing leading zeros
-        "01-1-2024",   # Missing leading zero in month
-        "01-01-24",    # Short year
-        "invalid-date",
-        ""
-    ])
+    @pytest.mark.parametrize(
+        "date_str",
+        [
+            "2024-01-01",  # Wrong format
+            "01/01/2024",  # Wrong separator
+            "1-1-2024",  # Missing leading zeros
+            "01-1-2024",  # Missing leading zero in month
+            "01-01-24",  # Short year
+            "invalid-date",
+            "",
+        ],
+    )
     def test_validate_date_format_invalid_cases(self, date_str):
         """Test various invalid date formats."""
         with pytest.raises(IGValidationError):
@@ -172,23 +190,26 @@ class TestPathValidators:
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("resolution", [
-        "SECOND",
-        "MINUTE",
-        "MINUTE_2",
-        "MINUTE_3",
-        "MINUTE_5",
-        "MINUTE_10",
-        "MINUTE_15",
-        "MINUTE_30",
-        "HOUR",
-        "HOUR_2",
-        "HOUR_3",
-        "HOUR_4",
-        "DAY",
-        "WEEK",
-        "MONTH"
-    ])
+    @pytest.mark.parametrize(
+        "resolution",
+        [
+            "SECOND",
+            "MINUTE",
+            "MINUTE_2",
+            "MINUTE_3",
+            "MINUTE_5",
+            "MINUTE_10",
+            "MINUTE_15",
+            "MINUTE_30",
+            "HOUR",
+            "HOUR_2",
+            "HOUR_3",
+            "HOUR_4",
+            "DAY",
+            "WEEK",
+            "MONTH",
+        ],
+    )
     def test_validate_resolution_valid_cases(self, resolution):
         """Test various valid resolution formats."""
         result = PathValidators.validate_resolution(resolution)
@@ -196,20 +217,14 @@ class TestPathValidators:
 
     @pytest.mark.unit
     @pytest.mark.validation
-    @pytest.mark.parametrize("resolution", [
-        "INVALID",
-        "MINUTE_1",
-        "HOUR_1",
-        "YEAR",
-        "DECADE",
-        "CUSTOM",
-        ""
-    ])
+    @pytest.mark.parametrize(
+        "resolution", ["INVALID", "MINUTE_1", "HOUR_1", "YEAR", "DECADE", "CUSTOM", ""]
+    )
     def test_validate_resolution_invalid_cases(self, resolution):
         """Test various invalid resolution formats."""
         with pytest.raises(IGValidationError) as exc_info:
             PathValidators.validate_resolution(resolution)
-        
+
         assert "Invalid resolution" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -277,19 +292,21 @@ class TestValidatePathParams:
 
     @pytest.mark.unit
     @pytest.mark.validation
-    def test_validate_path_params_multiple_params(self, valid_epic, valid_deal_id, valid_date):
+    def test_validate_path_params_multiple_params(
+        self, valid_epic, valid_deal_id, valid_date
+    ):
         """Test validating multiple path parameters."""
         result = validate_path_params(
             epic=valid_epic,
             deal_id=valid_deal_id,
             from_date=valid_date,
-            to_date=valid_date
+            to_date=valid_date,
         )
         expected = {
             "epic": valid_epic,
             "deal_id": valid_deal_id,
             "from_date": valid_date,
-            "to_date": valid_date
+            "to_date": valid_date,
         }
         assert result == expected
 
@@ -298,14 +315,12 @@ class TestValidatePathParams:
     def test_validate_path_params_with_resolution_and_points(self):
         """Test validating resolution and num_points parameters."""
         result = validate_path_params(
-            epic="IX.D.NASDAQ.IFE.IP",
-            resolution="MINUTE",
-            num_points=10
+            epic="IX.D.NASDAQ.IFE.IP", resolution="MINUTE", num_points=10
         )
         expected = {
             "epic": "IX.D.NASDAQ.IFE.IP",
             "resolution": "MINUTE",
-            "num_points": 10
+            "num_points": 10,
         }
         assert result == expected
 

@@ -33,8 +33,8 @@ def sample_accounts_response():
                     "balance": 1000.0,
                     "deposit": 1000.0,
                     "profitLoss": 0.0,
-                    "available": 1000.0
-                }
+                    "available": 1000.0,
+                },
             }
         ]
     }
@@ -52,7 +52,7 @@ def sample_positions_response():
                     "size": 1.0,
                     "direction": "BUY",
                     "level": 24000.0,
-                    "currency": "EUR"
+                    "currency": "EUR",
                 }
             }
         ]
@@ -70,7 +70,7 @@ def sample_markets_response():
                 "instrumentType": "INDICES",
                 "marketStatus": "TRADEABLE",
                 "bid": 24000.0,
-                "offer": 24010.0
+                "offer": 24010.0,
             }
         ]
     }
@@ -85,7 +85,7 @@ def sample_watchlists_response():
                 "id": "123",
                 "name": "My Watchlist",
                 "defaultSystemWatchlist": False,
-                "epics": ["IX.D.NASDAQ.IFE.IP"]
+                "epics": ["IX.D.NASDAQ.IFE.IP"],
             }
         ]
     }
@@ -96,7 +96,7 @@ def sample_error_response():
     """Sample error API response."""
     return {
         "errorCode": "validation.error",
-        "errorMessage": "Invalid request parameters"
+        "errorMessage": "Invalid request parameters",
     }
 
 
@@ -118,7 +118,7 @@ def mock_auth_session():
         "Content-Type": "application/json",
         "Accept": "application/json",
         "X-IG-API-KEY": "test-api-key",
-        "Authorization": "Bearer test-token"
+        "Authorization": "Bearer test-token",
     }
     session.is_authenticated.return_value = True
     return session
@@ -168,7 +168,7 @@ def valid_epics():
         "IX.D.NASDAQ.IFE.IP",
         "CS.D.EURGBP.CFD.IP",
         "CS.D.GBPUSD.CFD.IP",
-        "IX.D.FTSE.IFE.IP"
+        "IX.D.FTSE.IFE.IP",
     ]
 
 
@@ -180,7 +180,7 @@ def invalid_epics():
         "TOOSHORT",
         "THIS_EPIC_IS_WAY_TOO_LONG_AND_EXCEEDS_THE_MAXIMUM_LENGTH",
         "invalid@epic",
-        "epic with spaces"
+        "epic with spaces",
     ]
 
 
@@ -202,17 +202,11 @@ def valid_resolutions():
         "HOUR_4",
         "DAY",
         "WEEK",
-        "MONTH"
+        "MONTH",
     ]
 
 
 @pytest.fixture
 def invalid_resolutions():
     """List of invalid price resolutions."""
-    return [
-        "INVALID",
-        "MINUTE_1",
-        "HOUR_1",
-        "YEAR",
-        "DECADE"
-    ]
+    return ["INVALID", "MINUTE_1", "HOUR_1", "YEAR", "DECADE"]

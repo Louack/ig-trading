@@ -1,5 +1,10 @@
 from api_gateway.ig_client.auth import IGAuthenticator
-from api_gateway.ig_client.clients import AccountsClient, DealingClient, MarketsClient, WatchlistsClient
+from api_gateway.ig_client.clients import (
+    AccountsClient,
+    DealingClient,
+    MarketsClient,
+    WatchlistsClient,
+)
 from api_gateway.ig_client.rest import IGRest
 
 

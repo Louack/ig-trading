@@ -15,8 +15,12 @@ from api_gateway.ig_client.core.models.account.ig_responses import (
     ActivitiesByDateRange,
     Transactions,
 )
-from api_gateway.ig_client.core.models.account.request_bodies import UpdateAccountPreferencesRequest
-from api_gateway.ig_client.core.models.account.query_params import TransactionHistoryQueryParams
+from api_gateway.ig_client.core.models.account.request_bodies import (
+    UpdateAccountPreferencesRequest,
+)
+from api_gateway.ig_client.core.models.account.query_params import (
+    TransactionHistoryQueryParams,
+)
 from api_gateway.ig_client.core.validators import PathValidators
 
 logger = logging.getLogger(__name__)

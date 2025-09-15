@@ -13,7 +13,7 @@ from .exceptions import (
 
 __all__ = [
     "IGAPIError",
-    "IGAuthenticationError", 
+    "IGAuthenticationError",
     "IGAuthorizationError",
     "IGValidationError",
     "IGRateLimitError",

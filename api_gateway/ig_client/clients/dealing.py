@@ -12,7 +12,7 @@ from api_gateway.ig_client.core.models.dealing.ig_responses import (
     Position,
     DealConfirmation,
     WorkingOrders,
-    PendingDeal
+    PendingDeal,
 )
 from api_gateway.ig_client.core.models.dealing.request_bodies import (
     CreateOtcPositionRequest,
@@ -70,7 +70,7 @@ class DealingClient:
             endpoint="/positions/otc",
             version="1",
             data=validated_request.model_dump(exclude_none=True),
-            override_method="DELETE"
+            override_method="DELETE",
         )
         return PendingDeal(**json)
 

@@ -29,14 +29,14 @@ class TestIGRest:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "X-IG-API-KEY": "test-api-key",
-            "Authorization": "Bearer test-token"
+            "Authorization": "Bearer test-token",
         }
         return session
 
     @pytest.fixture
     def rest_client(self, mock_auth_session):
         """Create IGRest client instance."""
-        with patch('httpx.Client') as mock_client:
+        with patch("httpx.Client") as mock_client:
             mock_client_instance = Mock()
             mock_client.return_value = mock_client_instance
             client = IGRest("https://demo-api.ig.com", mock_auth_session)
@@ -46,16 +46,16 @@ class TestIGRest:
     @pytest.mark.unit
     def test_rest_client_initialization(self, mock_auth_session):
         """Test REST client initialization."""
-        with patch('httpx.Client') as mock_client:
+        with patch("httpx.Client") as mock_client:
             client = IGRest("https://demo-api.ig.com", mock_auth_session)
-            
+
             # Verify httpx.Client was called with correct parameters
             mock_client.assert_called_once()
             call_args = mock_client.call_args
-            
-            assert call_args[1]['base_url'] == "https://demo-api.ig.com"
-            assert call_args[1]['headers'] == mock_auth_session.get_headers.return_value
-            assert call_args[1]['timeout'] == 30.0
+
+            assert call_args[1]["base_url"] == "https://demo-api.ig.com"
+            assert call_args[1]["headers"] == mock_auth_session.get_headers.return_value
+            assert call_args[1]["timeout"] == 30.0
 
     @pytest.mark.unit
     def test_get_request_success(self, rest_client):
@@ -68,17 +68,17 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         result = rest_client.get("/accounts", "1")
-        
+
         # Verify request was made correctly
         rest_client.client.request.assert_called_once()
         call_args = rest_client.client.request.call_args
-        
-        assert call_args[1]['method'] == "GET"
-        assert call_args[1]['url'] == "/accounts"
-        assert call_args[1]['headers']['VERSION'] == "1"
-        
+
+        assert call_args[1]["method"] == "GET"
+        assert call_args[1]["url"] == "/accounts"
+        assert call_args[1]["headers"]["VERSION"] == "1"
+
         assert result == {"success": True}
 
     @pytest.mark.unit
@@ -92,19 +92,19 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         data = {"name": "Test Watchlist"}
         result = rest_client.post("/watchlists", "1", data=data)
-        
+
         # Verify request was made correctly
         rest_client.client.request.assert_called_once()
         call_args = rest_client.client.request.call_args
-        
-        assert call_args[1]['method'] == "POST"
-        assert call_args[1]['url'] == "/watchlists"
-        assert call_args[1]['headers']['VERSION'] == "1"
-        assert call_args[1]['json'] == data
-        
+
+        assert call_args[1]["method"] == "POST"
+        assert call_args[1]["url"] == "/watchlists"
+        assert call_args[1]["headers"]["VERSION"] == "1"
+        assert call_args[1]["json"] == data
+
         assert result == {"created": True}
 
     @pytest.mark.unit
@@ -118,19 +118,19 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         data = {"trailingStopsEnabled": True}
         result = rest_client.put("/accounts/preferences", "1", data=data)
-        
+
         # Verify request was made correctly
         rest_client.client.request.assert_called_once()
         call_args = rest_client.client.request.call_args
-        
-        assert call_args[1]['method'] == "PUT"
-        assert call_args[1]['url'] == "/accounts/preferences"
-        assert call_args[1]['headers']['VERSION'] == "1"
-        assert call_args[1]['json'] == data
-        
+
+        assert call_args[1]["method"] == "PUT"
+        assert call_args[1]["url"] == "/accounts/preferences"
+        assert call_args[1]["headers"]["VERSION"] == "1"
+        assert call_args[1]["json"] == data
+
         assert result == {"updated": True}
 
     @pytest.mark.unit
@@ -144,17 +144,17 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         result = rest_client.delete("/watchlists/123", "1")
-        
+
         # Verify request was made correctly
         rest_client.client.request.assert_called_once()
         call_args = rest_client.client.request.call_args
-        
-        assert call_args[1]['method'] == "DELETE"
-        assert call_args[1]['url'] == "/watchlists/123"
-        assert call_args[1]['headers']['VERSION'] == "1"
-        
+
+        assert call_args[1]["method"] == "DELETE"
+        assert call_args[1]["url"] == "/watchlists/123"
+        assert call_args[1]["headers"]["VERSION"] == "1"
+
         assert result == {"deleted": True}
 
     @pytest.mark.unit
@@ -168,18 +168,18 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         params = {"pageSize": 10, "pageNumber": 1}
         result = rest_client.get("/accounts", "1", params=params)
-        
+
         # Verify request was made with query params
         rest_client.client.request.assert_called_once()
         call_args = rest_client.client.request.call_args
-        
-        assert call_args[1]['method'] == "GET"
-        assert call_args[1]['url'] == "/accounts"
-        assert call_args[1]['params'] == params
-        
+
+        assert call_args[1]["method"] == "GET"
+        assert call_args[1]["url"] == "/accounts"
+        assert call_args[1]["params"] == params
+
         assert result == {"data": []}
 
     @pytest.mark.unit
@@ -188,15 +188,17 @@ class TestIGRest:
         # Mock 401 response
         mock_response = Mock()
         mock_response.status_code = 401
-        mock_response.json.return_value = {"errorCode": "error.security.invalid-session"}
+        mock_response.json.return_value = {
+            "errorCode": "error.security.invalid-session"
+        }
         mock_response.content = b'{"errorCode": "error.security.invalid-session"}'
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGAuthenticationError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Authentication failed" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -207,16 +209,16 @@ class TestIGRest:
         mock_response.status_code = 400
         mock_response.json.return_value = {
             "errorCode": "validation.error",
-            "errorMessage": "Invalid request parameters"
+            "errorMessage": "Invalid request parameters",
         }
         mock_response.content = b'{"errorCode": "validation.error", "errorMessage": "Invalid request parameters"}'
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGValidationError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Invalid request parameters" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -230,10 +232,10 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGRateLimitError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Rate limit exceeded" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -247,10 +249,10 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGNotFoundError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Resource not found" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -264,10 +266,10 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGServerError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Server error" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -275,21 +277,23 @@ class TestIGRest:
         """Test handling of network errors."""
         # Mock network error
         rest_client.client.request.side_effect = httpx.ConnectError("Connection failed")
-        
+
         with pytest.raises(IGNetworkError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Network error" in str(exc_info.value)
 
     @pytest.mark.unit
     def test_timeout_error(self, rest_client):
         """Test handling of timeout errors."""
         # Mock timeout error
-        rest_client.client.request.side_effect = httpx.TimeoutException("Request timeout")
-        
+        rest_client.client.request.side_effect = httpx.TimeoutException(
+            "Request timeout"
+        )
+
         with pytest.raises(IGTimeoutError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Request timeout" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -303,10 +307,10 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGAPIError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "HTTP 418" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -316,14 +320,14 @@ class TestIGRest:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.side_effect = ValueError("Invalid JSON")
-        mock_response.content = b'invalid json'
+        mock_response.content = b"invalid json"
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         with pytest.raises(IGAPIError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Failed to parse JSON response" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -331,10 +335,10 @@ class TestIGRest:
         """Test handling of general request exceptions."""
         # Mock general exception
         rest_client.client.request.side_effect = Exception("Unexpected error")
-        
+
         with pytest.raises(IGAPIError) as exc_info:
             rest_client.get("/accounts", "1")
-        
+
         assert "Unexpected error" in str(exc_info.value)
 
     @pytest.mark.unit
@@ -348,16 +352,16 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         # Test different versions
         rest_client.get("/accounts", "1")
         rest_client.get("/accounts", "2")
         rest_client.get("/accounts", "3")
-        
+
         # Verify all calls were made with correct versioning
         calls = rest_client.client.request.call_args_list
         assert len(calls) == 3
-        
+
         # Check that all calls use the correct versioning
         for i, call in enumerate(calls):
             args, kwargs = call
@@ -376,13 +380,13 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         rest_client.get("/accounts", "1")
-        
+
         # Verify headers were set correctly
         call_args = rest_client.client.request.call_args
         headers = call_args[1]["headers"]
-        
+
         assert "VERSION" in headers
         assert headers["VERSION"] == "1"
 
@@ -393,11 +397,11 @@ class TestIGRest:
         mock_response = Mock()
         mock_response.status_code = 204  # No Content
         mock_response.json.side_effect = ValueError("No JSON content")
-        mock_response.content = b''
+        mock_response.content = b""
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         # Should handle empty responses gracefully
         result = rest_client.get("/accounts", "1")
         assert result is None
@@ -414,7 +418,7 @@ class TestIGRest:
         mock_response.headers = {"X-Request-ID": "test-123"}
         mock_response.elapsed.total_seconds.return_value = 0.1
         rest_client.client.request.return_value = mock_response
-        
+
         result = rest_client.get("/accounts", "1")
         assert result == large_data
         assert len(result["items"]) == 1000
