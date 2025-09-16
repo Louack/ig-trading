@@ -429,3 +429,38 @@ class SimpleHistoricalPrices(BaseModel):
     allowance: Allowance
     instrumentType: InstrumentType
     prices: List[HistoricalPrice]
+
+
+class SearchMarket(BaseModel):
+    bid: Optional[Decimal] = None
+    delayTime: Optional[int] = None
+    epic: str
+    expiry: Optional[str] = None
+    high: Optional[Decimal] = None
+    instrumentName: str
+    instrumentType: InstrumentType
+    low: Optional[Decimal] = None
+    marketStatus: Optional[MarketStatus] = None
+    netChange: Optional[Decimal] = None
+    offer: Optional[Decimal] = None
+    percentageChange: Optional[Decimal] = None
+    scalingFactor: Optional[Decimal] = None
+    streamingPricesAvailable: Optional[bool] = None
+    updateTime: Optional[str] = None
+    updateTimeUTC: Optional[str] = None
+
+    @field_serializer(
+        "bid",
+        "high",
+        "low",
+        "netChange",
+        "offer",
+        "percentageChange",
+        "scalingFactor",
+    )
+    def serialize_decimal(self, value):
+        return float(value) if value is not None else None
+
+
+class SearchMarkets(BaseModel):
+    markets: List[SearchMarket]
