@@ -14,6 +14,11 @@ from api_gateway.ig_client.core.models.markets.ig_responses import (
     SimpleHistoricalPrices,
     SearchMarkets,
 )
+from api_gateway.ig_client.core.models.markets.query_params import (
+    GetMarketsQueryParams,
+    SearchMarketsQueryParams,
+    GetPricesQueryParams,
+)
 
 
 class MarketsClient:
@@ -21,16 +26,24 @@ class MarketsClient:
         self.rest = rest
 
     @handle_api_errors("get_markets")
+    @handle_validation_errors("get_markets")
     @handle_response_parsing("get_markets")
     def get_markets(self, epics: str, filter_type: str = "ALL") -> Markets:
-        params = {"epics": epics, "filter": filter_type}
+        # Validate query parameters with Pydantic
+        query_params = GetMarketsQueryParams(epics=epics, filter=filter_type)
+        params = query_params.model_dump(by_alias=True, exclude_none=True)
+        
         json = self.rest.get(endpoint="/markets", version="2", params=params)
         return Markets(**json)
 
     @handle_api_errors("search_markets")
+    @handle_validation_errors("search_markets")
     @handle_response_parsing("search_markets")
     def search_markets(self, search_term: str) -> SearchMarkets:
-        params = {"searchTerm": search_term}
+        # Validate query parameters with Pydantic
+        query_params = SearchMarketsQueryParams(searchTerm=search_term)
+        params = query_params.model_dump(by_alias=True, exclude_none=True)
+        
         json = self.rest.get(endpoint="/markets", version="1", params=params)
         return SearchMarkets(**json)
 
@@ -50,8 +63,11 @@ class MarketsClient:
         PathValidators.validate_epic(epic)
         if query_params is None:
             query_params = {}
+        validated_params = GetPricesQueryParams(**query_params)
+        params = validated_params.model_dump(by_alias=True, exclude_none=True)
+        
         json = self.rest.get(
-            endpoint=f"/prices/{epic}", version="3", params=query_params
+            endpoint=f"/prices/{epic}", version="3", params=params
         )
         return HistoricalPrices(**json)
 
