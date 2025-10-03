@@ -45,8 +45,16 @@ def handle_api_errors(operation_name: str = None):
                 logger.error(f"Validation error in {op_name}: {e}")
                 raise IGValidationError(f"Invalid {op_name} request/response: {str(e)}")
 
-            except (IGAuthenticationError, IGAuthorizationError, IGValidationError, 
-                    IGRateLimitError, IGNotFoundError, IGServerError, IGNetworkError, IGTimeoutError):
+            except (
+                IGAuthenticationError,
+                IGAuthorizationError,
+                IGValidationError,
+                IGRateLimitError,
+                IGNotFoundError,
+                IGServerError,
+                IGNetworkError,
+                IGTimeoutError,
+            ):
                 raise
 
             except Exception as e:

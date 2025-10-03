@@ -204,20 +204,23 @@ if __name__ == "__main__":
         "epic": "CS.D.BITCOIN.CFE.IP",
         "expiry": "-",
         "forceOpen": True,
-        "guaranteedStop": False,
+        "guaranteedStop": True,
         "orderType": "MARKET",
         "size": 1,
+        "stopDistance": 20000,
     }
 
-    created = create_position_and_wait_for_confirmation(body_data=body_data, dealing_client=client.dealing)
+    created = create_position_and_wait_for_confirmation(
+        body_data=body_data, dealing_client=client.dealing
+    )
     print(created)
-
-    positions = client.dealing.get_positions()
-    print(positions)
-
-    logger.info(f"{len(positions.positions)} position(s)")
-    for position in positions.positions:
-        logger.info(f"Position 1: dealID '{position.position.dealId}'")
+    #
+    # positions = client.dealing.get_positions()
+    # print(positions)
+    #
+    # logger.info(f"{len(positions.positions)} position(s)")
+    # for position in positions.positions:
+    #     logger.info(f"Position 1: dealID '{position.position.dealId}'")
 
     # position = positions.positions[0].position
     # deleted = client.dealing.close_position_otc(
