@@ -43,7 +43,7 @@ class MarketsClient:
         # Validate query parameters with Pydantic
         query_params = SearchMarketsQueryParams(searchTerm=search_term)
         params = query_params.model_dump(by_alias=True, exclude_none=True)
-        
+
         json = self.rest.get(endpoint="/markets", version="1", params=params)
         return SearchMarkets(**json)
 
@@ -65,10 +65,8 @@ class MarketsClient:
             query_params = {}
         validated_params = GetPricesQueryParams(**query_params)
         params = validated_params.model_dump(by_alias=True, exclude_none=True)
-        
-        json = self.rest.get(
-            endpoint=f"/prices/{epic}", version="3", params=params
-        )
+
+        json = self.rest.get(endpoint=f"/prices/{epic}", version="3", params=params)
         return HistoricalPrices(**json)
 
     @handle_api_errors("get_prices_by_points")

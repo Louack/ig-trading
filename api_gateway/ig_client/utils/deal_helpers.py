@@ -102,3 +102,24 @@ def create_position_and_wait_for_confirmation(
     )
 
     return confirmation
+
+
+def close_position_and_wait_for_confirmation(
+    dealing_client: DealingClient,
+    body_data: Dict[str, Any],
+    max_attempts: int = DEAL_CONFIRMATION_ATTEMPTS,
+    delay: int = DEAL_CONFIRMATION_DELAY,
+) -> Optional[DealConfirmation]:
+    logger.info("Close position and waiting for confirmation")
+
+    position = dealing_client.close_position_otc(body_data)
+    logger.info(f"Position closed with deal reference: {position.dealReference}")
+
+    confirmation = wait_for_deal_confirmation(
+        dealing_client,
+        position.dealReference,
+        max_attempts=max_attempts,
+        delay=delay,
+    )
+
+    return confirmation

@@ -76,8 +76,17 @@ class IGRest:
             logger.error(f"Network error for {method} {endpoint}: {str(e)}")
             raise IGNetworkError(f"Network error: {str(e)}")
 
-        except (IGAPIError, IGAuthenticationError, IGAuthorizationError, IGValidationError, 
-                IGRateLimitError, IGNotFoundError, IGServerError, IGNetworkError, IGTimeoutError):
+        except (
+            IGAPIError,
+            IGAuthenticationError,
+            IGAuthorizationError,
+            IGValidationError,
+            IGRateLimitError,
+            IGNotFoundError,
+            IGServerError,
+            IGNetworkError,
+            IGTimeoutError,
+        ):
             raise
         except Exception as e:
             logger.error(f"Unexpected error in request {method} {endpoint}: {str(e)}")
