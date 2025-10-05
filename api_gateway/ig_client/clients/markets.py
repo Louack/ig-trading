@@ -32,7 +32,7 @@ class MarketsClient:
         # Validate query parameters with Pydantic
         query_params = GetMarketsQueryParams(epics=epics, filter=filter_type)
         params = query_params.model_dump(by_alias=True, exclude_none=True)
-        
+
         json = self.rest.get(endpoint="/markets", version="2", params=params)
         return Markets(**json)
 
