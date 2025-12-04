@@ -6,8 +6,8 @@ import logging
 from datetime import datetime
 from data_collection.data_collector import DataCollector
 from data_collection.config_validation import validate_config
-from common.alerting import alerting_service, AlertSeverity
-from data_collection.storage.data_storage import DataStorage
+from common.alerting import alerting_service
+from data_collection.storage import CSVStorage
 from settings import MASSIVE_API_KEY
 
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +29,7 @@ def example_basic_usage():
     validated_config = validate_config(config)
 
     # Create storage with configured timeframes
-    storage = DataStorage(
+    storage = CSVStorage(
         data_dir=validated_config.storage.base_dir,
         timeframes=config["storage"]["timeframes"],
     )
@@ -68,7 +68,7 @@ def example_massive_basic():
     validated_config = validate_config(config)
 
     # Create storage with configured timeframes
-    storage = DataStorage(
+    storage = CSVStorage(
         data_dir=validated_config.storage.base_dir,
         timeframes=config["storage"]["timeframes"],
     )
@@ -111,7 +111,7 @@ def example_yfinance_basic():
     validated_config = validate_config(config)
 
     # Create storage with configured timeframes
-    storage = DataStorage(
+    storage = CSVStorage(
         data_dir=validated_config.storage.base_dir,
         timeframes=config["storage"]["timeframes"],
     )
@@ -374,8 +374,8 @@ if __name__ == "__main__":
 
     # Run examples
     examples = [
-        #("Basic Usage", example_basic_usage),
-        #("Massive Basic", example_massive_basic),
+        # ("Basic Usage", example_basic_usage),
+        # ("Massive Basic", example_massive_basic),
         ("YFinance Basic", example_yfinance_basic),
         # ("Context Manager", example_context_manager),
         # ("Health Monitoring", example_health_monitoring),

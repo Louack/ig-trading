@@ -15,19 +15,19 @@ from .rest import YFinanceRest
 class YFinanceClient:
     """
     Master client for YFinance API.
-    
+
     Provides a unified interface to the YFinance API with resilience features.
     """
-    
+
     def __init__(
         self,
-        rate_limiter: Optional['RateLimiter'] = None,
-        circuit_breaker: Optional['CircuitBreaker'] = None,
-        retry_config: Optional['RetryConfig'] = None,
+        rate_limiter: Optional["RateLimiter"] = None,
+        circuit_breaker: Optional["CircuitBreaker"] = None,
+        retry_config: Optional["RetryConfig"] = None,
     ):
         """
         Initialize YFinance client.
-        
+
         Args:
             rate_limiter: Optional rate limiter instance
             circuit_breaker: Optional circuit breaker instance
@@ -38,5 +38,3 @@ class YFinanceClient:
             circuit_breaker=circuit_breaker,
             retry_config=retry_config,
         )
-
-

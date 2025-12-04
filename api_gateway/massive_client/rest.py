@@ -8,7 +8,12 @@ import logging
 from typing import Optional, Callable, Any
 from polygon import RESTClient
 
-from common.resilience import CircuitBreaker, RateLimiter, RetryConfig, retry_with_backoff
+from common.resilience import (
+    CircuitBreaker,
+    RateLimiter,
+    RetryConfig,
+    retry_with_backoff,
+)
 from .core.exceptions import (
     MassiveAPIError,
     MassiveAuthenticationError,
@@ -26,11 +31,11 @@ logger = logging.getLogger(__name__)
 class MassiveRest:
     """
     Thin wrapper around polygon.RESTClient with resilience features.
-    
+
     This class delegates all API calls to the underlying polygon.RESTClient
     while adding rate limiting, circuit breaker, and retry logic.
     """
-    
+
     def __init__(
         self,
         api_key: str,
@@ -40,7 +45,7 @@ class MassiveRest:
     ):
         """
         Initialize Massive REST client wrapper.
-        
+
         Args:
             api_key: Massive API key
             rate_limiter: Optional rate limiter instance
@@ -51,47 +56,51 @@ class MassiveRest:
         self.rate_limiter = rate_limiter
         self.circuit_breaker = circuit_breaker
         self.retry_config = retry_config
-    
+
     def _with_resilience(self, func: Callable, *args, **kwargs) -> Any:
         """
         Execute function with resilience features (rate limiting, circuit breaker, retries).
-        
+
         Args:
             func: Function to execute
             *args: Function arguments
             **kwargs: Function keyword arguments
-            
+
         Returns:
             Function result
         """
         # Apply rate limiting
         if self.rate_limiter:
             self.rate_limiter.acquire()
-        
+
         # Execute with circuit breaker and retry
         def _execute():
             if self.circuit_breaker:
                 return self.circuit_breaker.call(func, *args, **kwargs)
             return func(*args, **kwargs)
-        
+
         if self.retry_config:
             return retry_with_backoff(_execute, self.retry_config)
         else:
             return _execute()
-    
+
     def _handle_exception(self, e: Exception) -> None:
         """
         Convert library exceptions to custom exceptions.
-        
+
         Args:
             e: Exception to convert
-            
+
         Raises:
             Appropriate MassiveAPIError subclass
         """
         error_str = str(e).lower()
-        
-        if "401" in error_str or "unauthorized" in error_str or "authentication" in error_str:
+
+        if (
+            "401" in error_str
+            or "unauthorized" in error_str
+            or "authentication" in error_str
+        ):
             raise MassiveAuthenticationError(f"Authentication failed: {e}")
         elif "403" in error_str or "forbidden" in error_str:
             raise MassiveAuthenticationError(f"Access forbidden: {e}")
@@ -99,9 +108,18 @@ class MassiveRest:
             raise MassiveNotFoundError(f"Resource not found: {e}")
         elif "429" in error_str or "rate limit" in error_str:
             raise MassiveRateLimitError(f"Rate limit exceeded: {e}")
-        elif "400" in error_str or "bad request" in error_str or "validation" in error_str:
+        elif (
+            "400" in error_str
+            or "bad request" in error_str
+            or "validation" in error_str
+        ):
             raise MassiveValidationError(f"Validation error: {e}")
-        elif "500" in error_str or "502" in error_str or "503" in error_str or "server error" in error_str:
+        elif (
+            "500" in error_str
+            or "502" in error_str
+            or "503" in error_str
+            or "server error" in error_str
+        ):
             raise MassiveServerError(f"Server error: {e}")
         elif "timeout" in error_str:
             raise MassiveTimeoutError(f"Request timeout: {e}")
@@ -109,9 +127,9 @@ class MassiveRest:
             raise MassiveNetworkError(f"Network error: {e}")
         else:
             raise MassiveAPIError(f"API error: {e}")
-    
+
     # Delegate all polygon.RESTClient methods with resilience
-    
+
     def list_aggs(self, *args, **kwargs):
         """Get aggregate bars for a ticker"""
         try:
@@ -119,7 +137,7 @@ class MassiveRest:
         except Exception as e:
             self._handle_exception(e)
             raise
-    
+
     def get_aggs(self, *args, **kwargs):
         """Get aggregate bars for a ticker (alternative method)"""
         try:
@@ -127,15 +145,17 @@ class MassiveRest:
         except Exception as e:
             self._handle_exception(e)
             raise
-    
+
     def get_ticker_details(self, *args, **kwargs):
         """Get ticker details"""
         try:
-            return self._with_resilience(self._client.get_ticker_details, *args, **kwargs)
+            return self._with_resilience(
+                self._client.get_ticker_details, *args, **kwargs
+            )
         except Exception as e:
             self._handle_exception(e)
             raise
-    
+
     def get_ticker_news(self, *args, **kwargs):
         """Get ticker news"""
         try:
@@ -143,7 +163,7 @@ class MassiveRest:
         except Exception as e:
             self._handle_exception(e)
             raise
-    
+
     def list_tickers(self, *args, **kwargs):
         """List all tickers"""
         try:
@@ -151,7 +171,7 @@ class MassiveRest:
         except Exception as e:
             self._handle_exception(e)
             raise
-    
+
     def __getattr__(self, name: str):
         """
         Delegate any other methods to the underlying client.
@@ -161,13 +181,16 @@ class MassiveRest:
         if hasattr(self._client, name):
             attr = getattr(self._client, name)
             if callable(attr):
+
                 def wrapper(*args, **kwargs):
                     try:
                         return self._with_resilience(attr, *args, **kwargs)
                     except Exception as e:
                         self._handle_exception(e)
                         raise
+
                 return wrapper
             return attr
-        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
-
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )

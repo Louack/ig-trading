@@ -14,13 +14,12 @@ from .exceptions import (
 )
 
 __all__ = [
-    'MassiveAPIError',
-    'MassiveAuthenticationError',
-    'MassiveValidationError',
-    'MassiveRateLimitError',
-    'MassiveNotFoundError',
-    'MassiveServerError',
-    'MassiveNetworkError',
-    'MassiveTimeoutError',
+    "MassiveAPIError",
+    "MassiveAuthenticationError",
+    "MassiveValidationError",
+    "MassiveRateLimitError",
+    "MassiveNotFoundError",
+    "MassiveServerError",
+    "MassiveNetworkError",
+    "MassiveTimeoutError",
 ]
-

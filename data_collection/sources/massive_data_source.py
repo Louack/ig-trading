@@ -55,35 +55,34 @@ class MassiveDataSource(DataSource):
         else:
             # Create gateway client with resilience features from config
             from common.resilience import CircuitBreaker, RateLimiter, RetryConfig
-            
+
             tier = config.get("tier", "free")
             rate_limit = 4 if tier == "free" else config.get("rate_limit_calls", 100)
-            
+
             rate_limiter = RateLimiter(
-                max_calls=rate_limit,
-                period_seconds=config.get("rate_limit_period", 60)
+                max_calls=rate_limit, period_seconds=config.get("rate_limit_period", 60)
             )
-            
+
             circuit_breaker = CircuitBreaker(
                 failure_threshold=config.get("circuit_breaker_threshold", 10),
-                recovery_timeout=config.get("circuit_breaker_timeout", 60)
+                recovery_timeout=config.get("circuit_breaker_timeout", 60),
             )
-            
+
             retry_config = RetryConfig(
                 max_attempts=config.get("max_retries", 3),
                 base_delay=config.get("retry_base_delay", 1.0),
                 max_delay=config.get("retry_max_delay", 30.0),
                 exponential=True,
-                jitter=True
+                jitter=True,
             )
-            
+
             self._client = MassiveClient(
                 api_key=self.api_key,
                 rate_limiter=rate_limiter,
                 circuit_breaker=circuit_breaker,
-                retry_config=retry_config
+                retry_config=retry_config,
             )
-        
+
         self._connected = False
 
     def connect(self) -> bool:

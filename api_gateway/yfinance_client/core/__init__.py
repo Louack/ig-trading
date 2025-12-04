@@ -13,13 +13,11 @@ from .exceptions import (
 )
 
 __all__ = [
-    'YFinanceAPIError',
-    'YFinanceValidationError',
-    'YFinanceRateLimitError',
-    'YFinanceNotFoundError',
-    'YFinanceServerError',
-    'YFinanceNetworkError',
-    'YFinanceTimeoutError',
+    "YFinanceAPIError",
+    "YFinanceValidationError",
+    "YFinanceRateLimitError",
+    "YFinanceNotFoundError",
+    "YFinanceServerError",
+    "YFinanceNetworkError",
+    "YFinanceTimeoutError",
 ]
-
-

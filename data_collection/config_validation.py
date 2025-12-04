@@ -2,7 +2,7 @@
 Configuration validation using Pydantic
 """
 
-from typing import Optional, Dict, Any, Literal
+from typing import Optional, Dict, Any, Literal, List
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -75,11 +75,14 @@ class YFinanceDataSourceConfig(DataSourceConfig):
 class StorageConfig(BaseModel):
     """Configuration for data storage"""
 
+    storage_type: Literal["csv", "parquet", "database"] = Field(default="csv")
     base_dir: str = Field(default="data", min_length=1)
-    format: Literal["csv", "parquet"] = Field(default="csv")
+    timeframes: List[str] = Field(default_factory=lambda: ["1D"])
     compression: Optional[str] = Field(default=None)
     enable_checksums: bool = Field(default=True)
     atomic_writes: bool = Field(default=True)
+    # Database-specific options
+    connection_string: Optional[str] = Field(default=None)
 
 
 class CollectorConfig(BaseModel):

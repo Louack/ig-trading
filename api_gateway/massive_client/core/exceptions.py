@@ -105,4 +105,3 @@ class MassiveTimeoutError(MassiveAPIError):
 
     def __init__(self, message: str = "Request timeout", **kwargs):
         super().__init__(message, MassiveErrorType.TIMEOUT, **kwargs)
-

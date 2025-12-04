@@ -13,10 +13,10 @@ from .rest import MassiveRest
 class MassiveClient:
     """
     Master client for Massive API.
-    
+
     Provides a unified interface to the Massive API with resilience features.
     """
-    
+
     def __init__(
         self,
         api_key: str,
@@ -26,7 +26,7 @@ class MassiveClient:
     ):
         """
         Initialize Massive client.
-        
+
         Args:
             api_key: Massive API key
             rate_limiter: Optional rate limiter instance
@@ -39,4 +39,3 @@ class MassiveClient:
             circuit_breaker=circuit_breaker,
             retry_config=retry_config,
         )
-

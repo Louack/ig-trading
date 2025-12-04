@@ -265,4 +265,3 @@ class YFinanceDataSource(DataSource):
     def is_connected(self) -> bool:
         """Check if connected to YFinance"""
         return self._connected and self._client is not None
-

@@ -1,5 +1,5 @@
 """
-Data storage for market data from any source
+CSV-based storage implementation for market data
 """
 
 import logging
@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 import hashlib
 
+from ..interfaces.storage import StorageInterface
 from ..interfaces.market_data import MarketData
 from data_collection.config import STORAGE_CONFIG
 from ..validation import DataValidator
@@ -16,8 +17,8 @@ from ..validation import DataValidator
 logger = logging.getLogger(__name__)
 
 
-class DataStorage:
-    """Data storage for market data from any source"""
+class CSVStorage(StorageInterface):
+    """CSV-based storage implementation for market data"""
 
     def __init__(
         self,
@@ -26,7 +27,7 @@ class DataStorage:
         validator: Optional[DataValidator] = None,
     ):
         """
-        Initialize data storage
+        Initialize CSV storage
 
         Args:
             data_dir: Base directory for data storage (defaults to STORAGE_CONFIG["base_dir"])
@@ -83,7 +84,9 @@ class DataStorage:
                 existing_df["timestamp"] = pd.to_datetime(existing_df["timestamp"])
                 # Normalize to timezone-naive (UTC) for consistency
                 if existing_df["timestamp"].dt.tz is not None:
-                    existing_df["timestamp"] = existing_df["timestamp"].dt.tz_localize(None)
+                    existing_df["timestamp"] = existing_df["timestamp"].dt.tz_localize(
+                        None
+                    )
 
                 # Normalize new data timestamps to timezone-naive
                 if new_df["timestamp"].dt.tz is not None:

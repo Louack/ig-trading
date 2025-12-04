@@ -24,14 +24,14 @@ logger = logging.getLogger(__name__)
 
 class IGRest:
     def __init__(
-        self, 
-        base_url: str, 
+        self,
+        base_url: str,
         auth_session: IGAuthenticator,
-        rate_limiter: Optional['RateLimiter'] = None
+        rate_limiter: Optional["RateLimiter"] = None,
     ):
         """
         Initialize IG REST client.
-        
+
         Args:
             base_url: Base URL for IG API
             auth_session: Authentication session
@@ -67,7 +67,7 @@ class IGRest:
     def _request(self, method: str, endpoint: str, version: str, **kwargs):
         if self.rate_limiter:
             self.rate_limiter.acquire()
-        
+
         override_method = kwargs.pop("override_method", "")  # Remove from kwargs
         headers = self.auth_session.get_headers()
         headers["VERSION"] = version

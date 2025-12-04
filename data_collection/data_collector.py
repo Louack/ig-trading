@@ -9,8 +9,9 @@ import pandas as pd
 
 from .interfaces.data_source import DataSource
 from .interfaces.market_data import MarketData
+from .interfaces.storage import StorageInterface
 from .factory.data_source_factory import DataSourceFactory
-from .storage.data_storage import DataStorage
+from .storage.csv_storage import CSVStorage
 from .health import HealthMonitor
 from common.alerting import escalate_error, AlertSeverity
 from data_collection.config import INSTRUMENTS, TIMEFRAMES
@@ -24,7 +25,7 @@ class DataCollector:
     def __init__(
         self,
         data_sources: Dict[str, Dict[str, Any]],
-        storage: Optional[DataStorage] = None,
+        storage: Optional[StorageInterface] = None,
         health_monitor: Optional[HealthMonitor] = None,
         enable_health_monitoring: bool = True,
     ):
@@ -33,12 +34,12 @@ class DataCollector:
 
         Args:
             data_sources: Dictionary mapping source names to their configurations
-            storage: Optional DataStorage instance (created if not provided)
+            storage: Optional StorageInterface instance (defaults to CSVStorage if not provided)
             health_monitor: Optional HealthMonitor instance (created if not provided)
             enable_health_monitoring: Enable health monitoring for data sources
         """
         self.data_sources: Dict[str, DataSource] = {}
-        self.storage = storage or DataStorage()
+        self.storage = storage or CSVStorage()
         self.enable_health_monitoring = enable_health_monitoring
 
         # Initialize health monitor
