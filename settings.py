@@ -24,7 +24,9 @@ IG_PROD_IDENTIFIER = os.getenv("IG_PROD_IDENTIFIER", default="default")
 IG_PROD_PASSWORD = os.getenv("IG_PROD_PASSWORD", default="default")
 
 # Massive (formerly Polygon.io) API credentials
-MASSIVE_API_KEY = os.getenv("MASSIVE_API_KEY", default=os.getenv("POLYGON_API_KEY", default=""))
+MASSIVE_API_KEY = os.getenv(
+    "MASSIVE_API_KEY", default=os.getenv("POLYGON_API_KEY", default="")
+)
 # Legacy support for POLYGON_API_KEY (will be removed in future)
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY", default=MASSIVE_API_KEY)
 

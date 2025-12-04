@@ -12,11 +12,10 @@ from .alerting_service import (
 )
 
 __all__ = [
-    'AlertingService',
-    'AlertSeverity',
-    'CriticalError',
-    'alerting_service',
-    'escalate_error',
-    'escalate_critical_error',
+    "AlertingService",
+    "AlertSeverity",
+    "CriticalError",
+    "alerting_service",
+    "escalate_error",
+    "escalate_critical_error",
 ]
-
