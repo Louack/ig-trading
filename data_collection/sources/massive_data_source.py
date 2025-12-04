@@ -1,21 +1,15 @@
 """
-Massive market data implementation built on polygon-api-client
+Massive market data implementation using API gateway client
 """
 
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from polygon import RESTClient
 from polygon.rest.models import Agg
 
 from ..interfaces.data_source import DataSource
 from ..interfaces.market_data import MarketData, MarketDataPoint, PriceData
-from common.resilience import (
-    CircuitBreaker,
-    RateLimiter,
-    RetryConfig,
-    retry_with_backoff,
-)
+from api_gateway.massive_client import MassiveClient
 from common.alerting import escalate_error, AlertSeverity
 
 logger = logging.getLogger(__name__)
@@ -38,10 +32,7 @@ class MassiveDataSource(DataSource):
     def __init__(
         self,
         config: Dict[str, Any],
-        client: Optional[RESTClient] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
-        rate_limiter: Optional[RateLimiter] = None,
-        retry_config: Optional[RetryConfig] = None,
+        client: Optional[MassiveClient] = None,
         api_key: Optional[str] = None,
     ):
         """
@@ -49,10 +40,7 @@ class MassiveDataSource(DataSource):
 
         Args:
             config: Configuration dictionary
-            client: Optional RESTClient instance (created if not provided)
-            circuit_breaker: Optional CircuitBreaker instance (created from config if not provided)
-            rate_limiter: Optional RateLimiter instance (created from config if not provided)
-            retry_config: Optional RetryConfig instance (created from config if not provided)
+            client: Optional MassiveClient instance (created if not provided)
             api_key: Optional API key (overrides config)
         """
         super().__init__(config)
@@ -61,34 +49,42 @@ class MassiveDataSource(DataSource):
         if not self.api_key:
             raise ValueError("Massive API key is required")
 
-        self._client: Optional[RESTClient] = client
-        self._connected = False
-
-        self.timeout = config.get("timeout", 30)
-        self.max_retries = config.get("max_retries", 3)
-
-        # Circuit breaker: use injected or create from config
-        self.circuit_breaker = circuit_breaker or CircuitBreaker(
-            failure_threshold=config.get("circuit_breaker_threshold", 10),
-            recovery_timeout=config.get("circuit_breaker_timeout", 60),
-        )
-
-        # Rate limiter: use injected or create from config
-        if rate_limiter:
-            self.rate_limiter = rate_limiter
+        # Use gateway client (resilience features are handled at gateway level)
+        if client:
+            self._client = client
         else:
+            # Create gateway client with resilience features from config
+            from common.resilience import CircuitBreaker, RateLimiter, RetryConfig
+            
             tier = config.get("tier", "free")
             rate_limit = 4 if tier == "free" else config.get("rate_limit_calls", 100)
-            self.rate_limiter = RateLimiter(max_calls=rate_limit, period_seconds=60)
-
-        # Retry configuration: use injected or create from config
-        self.retry_config = retry_config or RetryConfig(
-            max_attempts=self.max_retries,
-            base_delay=config.get("retry_base_delay", 1.0),
-            max_delay=config.get("retry_max_delay", 30.0),
-            exponential=True,
-            jitter=True,
-        )
+            
+            rate_limiter = RateLimiter(
+                max_calls=rate_limit,
+                period_seconds=config.get("rate_limit_period", 60)
+            )
+            
+            circuit_breaker = CircuitBreaker(
+                failure_threshold=config.get("circuit_breaker_threshold", 10),
+                recovery_timeout=config.get("circuit_breaker_timeout", 60)
+            )
+            
+            retry_config = RetryConfig(
+                max_attempts=config.get("max_retries", 3),
+                base_delay=config.get("retry_base_delay", 1.0),
+                max_delay=config.get("retry_max_delay", 30.0),
+                exponential=True,
+                jitter=True
+            )
+            
+            self._client = MassiveClient(
+                api_key=self.api_key,
+                rate_limiter=rate_limiter,
+                circuit_breaker=circuit_breaker,
+                retry_config=retry_config
+            )
+        
+        self._connected = False
 
     def connect(self) -> bool:
         """Establish connection to Massive"""
@@ -97,18 +93,8 @@ class MassiveDataSource(DataSource):
             return True
 
         try:
-
-            def _connect():
-                client = RESTClient(api_key=self.api_key)
-
-                try:
-                    client.get_ticker_details("AAPL")
-                except Exception as e:
-                    raise Exception(f"Connection test failed: {e}")
-
-                return client
-
-            self._client = retry_with_backoff(_connect, self.retry_config)
+            # Test connection using gateway client
+            self._client.rest.get_ticker_details("AAPL")
             self._connected = True
             logger.info("Connected to Massive")
             return True
@@ -178,37 +164,26 @@ class MassiveDataSource(DataSource):
             logger.error(f"Unsupported timeframe: {timeframe}")
             return None
 
-        if self.circuit_breaker.is_open:
-            logger.warning("Circuit breaker is open for Massive")
-            return None
-
         try:
-            self.rate_limiter.acquire()
+            # Use gateway client - resilience features are handled at gateway level
+            config = self.TIMEFRAME_MAPPING[timeframe]
 
-            def _fetch():
-                config = self.TIMEFRAME_MAPPING[timeframe]
+            end_date_str = (end_date or datetime.now()).strftime("%Y-%m-%d")
+            start_date_str = (
+                start_date or datetime.now() - timedelta(days=365)
+            ).strftime("%Y-%m-%d")
 
-                end_date_str = (end_date or datetime.now()).strftime("%Y-%m-%d")
-                start_date_str = (
-                    start_date or datetime.now() - timedelta(days=365)
-                ).strftime("%Y-%m-%d")
-
-                aggs = []
-                for agg in self._client.list_aggs(
-                    ticker=symbol,
-                    multiplier=config["multiplier"],
-                    timespan=config["timespan"],
-                    from_=start_date_str,
-                    to=end_date_str,
-                    limit=limit or 50000,
-                ):
-                    aggs.append(agg)
-
-                return aggs
-
-            aggs = self.circuit_breaker.call(
-                lambda: retry_with_backoff(_fetch, self.retry_config)
-            )
+            # Gateway client handles rate limiting, circuit breaker, and retries
+            aggs = []
+            for agg in self._client.rest.list_aggs(
+                ticker=symbol,
+                multiplier=config["multiplier"],
+                timespan=config["timespan"],
+                from_=start_date_str,
+                to=end_date_str,
+                limit=limit or 50000,
+            ):
+                aggs.append(agg)
 
             market_data = self._convert_massive_response(aggs, symbol, timeframe)
 
