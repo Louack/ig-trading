@@ -1,5 +1,5 @@
 """
-Unified data collector that can work with multiple data sources
+Data collector that can work with multiple data sources
 """
 
 import logging
@@ -10,31 +10,42 @@ import pandas as pd
 from .interfaces.data_source import DataSource
 from .interfaces.market_data import MarketData
 from .factory.data_source_factory import DataSourceFactory
-from .storage.unified_data_storage import UnifiedDataStorage
+from .storage.data_storage import DataStorage
 from .health import HealthMonitor
-from .alerting import escalate_error, AlertSeverity
+from common.alerting import escalate_error, AlertSeverity
 from data_collection.config import INSTRUMENTS, TIMEFRAMES
 
 logger = logging.getLogger(__name__)
 
 
-class UnifiedDataCollector:
-    """Unified data collector that can work with multiple data sources"""
+class DataCollector:
+    """Data collector that can work with multiple data sources"""
     
-    def __init__(self, data_sources: Dict[str, Dict[str, Any]], enable_health_monitoring: bool = True):
+    def __init__(
+        self, 
+        data_sources: Dict[str, Dict[str, Any]], 
+        storage: Optional[DataStorage] = None,
+        health_monitor: Optional[HealthMonitor] = None,
+        enable_health_monitoring: bool = True
+    ):
         """
         Initialize data collector with multiple data sources
         
         Args:
             data_sources: Dictionary mapping source names to their configurations
+            storage: Optional DataStorage instance (created if not provided)
+            health_monitor: Optional HealthMonitor instance (created if not provided)
             enable_health_monitoring: Enable health monitoring for data sources
         """
         self.data_sources: Dict[str, DataSource] = {}
-        self.storage = UnifiedDataStorage()
+        self.storage = storage or DataStorage()
         self.enable_health_monitoring = enable_health_monitoring
         
         # Initialize health monitor
-        self.health_monitor = HealthMonitor() if enable_health_monitoring else None
+        if enable_health_monitoring:
+            self.health_monitor = health_monitor or HealthMonitor()
+        else:
+            self.health_monitor = None
         
         # Initialize data sources
         for source_name, config in data_sources.items():
@@ -54,7 +65,7 @@ class UnifiedDataCollector:
                     logger.error(f"Failed to connect to {source_name} data source")
                     escalate_error(
                         Exception(f"Failed to connect to {source_name}"),
-                        {'component': 'UnifiedDataCollector', 'source': source_name},
+                        {'component': 'DataCollector', 'source': source_name},
                         AlertSeverity.HIGH
                     )
                     
@@ -62,7 +73,7 @@ class UnifiedDataCollector:
                 logger.error(f"Failed to initialize {source_name} data source: {e}")
                 escalate_error(
                     e,
-                    {'component': 'UnifiedDataCollector', 'source': source_name, 'config': config},
+                    {'component': 'DataCollector', 'source': source_name, 'config': config},
                     AlertSeverity.HIGH
                 )
         

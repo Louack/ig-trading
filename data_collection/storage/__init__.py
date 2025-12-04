@@ -1,5 +1,5 @@
-from .unified_data_storage import UnifiedDataStorage
+from .data_storage import DataStorage
 
 __all__ = [
-    'UnifiedDataStorage'
+    'DataStorage'
 ]

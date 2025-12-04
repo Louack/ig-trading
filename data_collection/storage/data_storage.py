@@ -1,5 +1,5 @@
 """
-Unified data storage for market data from any source
+Data storage for market data from any source
 """
 
 import logging
@@ -16,15 +16,31 @@ from ..validation import DataValidator
 logger = logging.getLogger(__name__)
 
 
-class UnifiedDataStorage:
-    """Unified storage for market data from any source"""
+class DataStorage:
+    """Data storage for market data from any source"""
     
-    def __init__(self, data_dir: str = STORAGE_CONFIG["base_dir"]):
-        self.data_dir = Path(data_dir)
+    def __init__(
+        self, 
+        data_dir: Optional[str] = None,
+        timeframes: Optional[List[str]] = None,
+        validator: Optional[DataValidator] = None
+    ):
+        """
+        Initialize data storage
+        
+        Args:
+            data_dir: Base directory for data storage (defaults to STORAGE_CONFIG["base_dir"])
+            timeframes: List of timeframes to create subdirectories for (defaults to STORAGE_CONFIG["timeframes"])
+            validator: Optional DataValidator instance (uses static methods if not provided)
+        """
+        self.data_dir = Path(data_dir or STORAGE_CONFIG["base_dir"])
         self.data_dir.mkdir(exist_ok=True)
         
+        self.validator = validator
+        timeframes_list = timeframes or STORAGE_CONFIG["timeframes"]
+        
         # Create subdirectories for timeframes
-        for timeframe in STORAGE_CONFIG["timeframes"]:
+        for timeframe in timeframes_list:
             (self.data_dir / timeframe).mkdir(exist_ok=True)
     
     def store_market_data(self, market_data: MarketData) -> bool:
@@ -39,7 +55,12 @@ class UnifiedDataStorage:
         """
         try:
             # Validate data before storing
-            if not DataValidator.validate_market_data(market_data):
+            if self.validator:
+                is_valid = self.validator.validate_market_data(market_data)
+            else:
+                is_valid = DataValidator.validate_market_data(market_data)
+            
+            if not is_valid:
                 logger.error(f"Data validation failed for {market_data.symbol}")
                 return False
             
@@ -52,7 +73,9 @@ class UnifiedDataStorage:
             
             # Use canonical filename (no timestamp)
             filename = f"{market_data.symbol}_{market_data.source}.csv"
-            filepath = self.data_dir / market_data.timeframe / filename
+            timeframe_dir = self.data_dir / market_data.timeframe
+            timeframe_dir.mkdir(parents=True, exist_ok=True)
+            filepath = timeframe_dir / filename
             
             # Load existing data if file exists
             if filepath.exists():
@@ -310,7 +333,8 @@ class UnifiedDataStorage:
         }
         
         try:
-            for timeframe in STORAGE_CONFIG["timeframes"]:
+            timeframes_list = STORAGE_CONFIG["timeframes"]
+            for timeframe in timeframes_list:
                 timeframe_dir = self.data_dir / timeframe
                 
                 if timeframe_dir.exists():
