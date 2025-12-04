@@ -2,7 +2,8 @@
 Visualization module for trading data and technical indicators
 """
 
-from .chart import Chart
+from .chart import StaticChart
+from .interactive_chart import InteractiveChart
 from .indicators import (
     Indicator,
     SMA,
@@ -15,7 +16,8 @@ from .indicators import (
 )
 
 __all__ = [
-    "Chart",
+    "StaticChart",
+    "InteractiveChart",
     "Indicator",
     "SMA",
     "EMA",
