@@ -4,9 +4,11 @@ Examples demonstrating the improved data collection module features
 
 import logging
 from datetime import datetime
-from data_collection.unified_data_collector import UnifiedDataCollector
+from data_collection.data_collector import DataCollector
 from data_collection.config_validation import validate_config
-from data_collection.alerting import alerting_service, AlertSeverity
+from common.alerting import alerting_service, AlertSeverity
+from data_collection.storage.data_storage import DataStorage
+from settings import MASSIVE_API_KEY
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,8 +22,12 @@ def example_basic_usage():
             'ig_demo': {
                 'type': 'ig',
                 'name': 'IG Demo Account',
-                'account_type': 'demo'
+                'account_type': 'prod'
             }
+        },
+        'storage': {
+            'base_dir': 'data',
+            'timeframes': ['1D']
         },
         'enable_health_checks': True
     }
@@ -29,19 +35,73 @@ def example_basic_usage():
     # Validate configuration
     validated_config = validate_config(config)
     
-    # Initialize collector
-    collector = UnifiedDataCollector(validated_config.data_sources)
+    # Create storage with configured timeframes
+    storage = DataStorage(
+        data_dir=validated_config.storage.base_dir,
+        timeframes=config['storage']['timeframes']
+    )
+    
+    # Initialize collector with custom storage
+    collector = DataCollector(validated_config.data_sources, storage=storage)
     
     # Collect and store data
     success = collector.collect_and_store(
-        symbol="IX.D.FTSE.IFM.IP",
+        symbol="CS.D.BITCOIN.CFE.IP",
         timeframe="1D"
     )
     
     if success:
         # Load stored data
-        df = collector.load_data("IX.D.FTSE.IFM.IP", "1D")
+        df = collector.load_data("CS.D.BITCOIN.CFE.IP", "1D")
         print(f"Loaded {len(df)} data points")
+    
+    collector.disconnect_all()
+
+
+def example_massive_basic():
+    """Example: Massive data source - single stock, 1D timeframe"""
+    
+    config = {
+        'data_sources': {
+            'massive': {
+                'type': 'massive',
+                'name': 'Massive',
+                'api_key': MASSIVE_API_KEY,
+                'tier': 'free'
+            }
+        },
+        'storage': {
+            'base_dir': 'data',
+            'timeframes': ['1D']
+        },
+        'enable_health_checks': True
+    }
+    
+    # Validate configuration
+    validated_config = validate_config(config)
+    
+    # Create storage with configured timeframes
+    storage = DataStorage(
+        data_dir=validated_config.storage.base_dir,
+        timeframes=config['storage']['timeframes']
+    )
+    
+    # Initialize collector with custom storage
+    collector = DataCollector(validated_config.data_sources, storage=storage)
+    
+    # Collect and store data for a single stock
+    success = collector.collect_and_store(
+        symbol="AAPL",
+        timeframe="1D",
+        source_name="massive"
+    )
+    
+    if success:
+        # Load stored data
+        df = collector.load_data("AAPL", "1D")
+        if df is not None:
+            print(f"Loaded {len(df)} data points for AAPL")
+            print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
     
     collector.disconnect_all()
 
@@ -61,7 +121,7 @@ def example_context_manager():
     
     validated_config = validate_config(config)
     
-    with UnifiedDataCollector(validated_config.data_sources) as collector:
+    with DataCollector(validated_config.data_sources) as collector:
         # Collect data for multiple symbols
         symbols = ["IX.D.FTSE.IFM.IP", "IX.D.DAX.IFM.IP"]
         
@@ -88,7 +148,7 @@ def example_health_monitoring():
     }
     
     validated_config = validate_config(config)
-    collector = UnifiedDataCollector(
+    collector = DataCollector(
         validated_config.data_sources,
         enable_health_monitoring=True
     )
@@ -134,7 +194,7 @@ def example_custom_alert_handler():
     }
     
     validated_config = validate_config(config)
-    collector = UnifiedDataCollector(validated_config.data_sources)
+    collector = DataCollector(validated_config.data_sources)
     
     # Errors are automatically escalated through registered handlers
     collector.collect_and_store("INVALID_SYMBOL", "1D")
@@ -184,7 +244,7 @@ def example_resilience_configuration():
     # Validation ensures all values are within acceptable ranges
     validated_config = validate_config(config)
     
-    collector = UnifiedDataCollector(validated_config.data_sources)
+    collector = DataCollector(validated_config.data_sources)
     
     # Collection automatically uses all resilience features:
     # - Retries with exponential backoff
@@ -213,7 +273,7 @@ def example_batch_collection():
     
     validated_config = validate_config(config)
     
-    with UnifiedDataCollector(validated_config.data_sources) as collector:
+    with DataCollector(validated_config.data_sources) as collector:
         symbols = [
             "IX.D.FTSE.IFM.IP",
             "IX.D.DAX.IFM.IP",
@@ -286,7 +346,7 @@ def example_storage_info():
     }
     
     validated_config = validate_config(config)
-    collector = UnifiedDataCollector(validated_config.data_sources)
+    collector = DataCollector(validated_config.data_sources)
     
     # Get storage information
     storage_info = collector.get_storage_info()
@@ -313,13 +373,14 @@ if __name__ == "__main__":
     # Run examples
     examples = [
         ("Basic Usage", example_basic_usage),
-        ("Context Manager", example_context_manager),
-        ("Health Monitoring", example_health_monitoring),
-        ("Custom Alert Handler", example_custom_alert_handler),
-        ("Resilience Configuration", example_resilience_configuration),
-        ("Batch Collection", example_batch_collection),
-        ("Data Validation", example_data_validation),
-        ("Storage Info", example_storage_info)
+        ("Massive Basic", example_massive_basic),
+        # ("Context Manager", example_context_manager),
+        # ("Health Monitoring", example_health_monitoring),
+        # ("Custom Alert Handler", example_custom_alert_handler),
+        # ("Resilience Configuration", example_resilience_configuration),
+        # ("Batch Collection", example_batch_collection),
+        # ("Data Validation", example_data_validation),
+        # ("Storage Info", example_storage_info)
     ]
     
     for name, func in examples:
