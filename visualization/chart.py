@@ -40,7 +40,7 @@ class Chart:
                 self.symbol = "Unknown"
         else:
             self.symbol = symbol
-            
+
         if timeframe is None:
             if "timeframe" in self.df.columns and len(self.df) > 0:
                 self.timeframe = self.df["timeframe"].iloc[0]
@@ -202,16 +202,18 @@ class Chart:
                     if col_name in self.plot_data.columns:
                         # Get indicator data - ensure it's aligned with plot_df index
                         indicator_data = self.plot_data[col_name].copy()
-                        
+
                         # Convert None to NaN and handle missing values
                         indicator_data = indicator_data.replace([None], pd.NA)
                         # Forward fill NaN values (for indicators that need warm-up period like SMA 200)
                         indicator_data = indicator_data.ffill()
-                        
+
                         # Only add if we have at least some valid data
                         if indicator_data.notna().sum() > 0:
                             # Ensure the data uses the same index as plot_df
-                            indicator_data_aligned = indicator_data.reindex(plot_df.index)
+                            indicator_data_aligned = indicator_data.reindex(
+                                plot_df.index
+                            )
                             addplot_list.append(
                                 mpf.make_addplot(
                                     indicator_data_aligned,
@@ -249,7 +251,11 @@ class Chart:
                 histogram = None
 
                 for col in self.plot_data.columns:
-                    if "macd" in col.lower() and "signal" not in col.lower() and "hist" not in col.lower():
+                    if (
+                        "macd" in col.lower()
+                        and "signal" not in col.lower()
+                        and "hist" not in col.lower()
+                    ):
                         macd_line = self.plot_data[col]
                     elif "macd_signal" in col.lower() or "macds" in col.lower():
                         signal_line = self.plot_data[col]
@@ -328,4 +334,3 @@ class Chart:
             DataFrame with OHLCV data and indicator columns
         """
         return self.plot_data.copy()
-

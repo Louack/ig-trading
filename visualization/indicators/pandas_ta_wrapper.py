@@ -12,7 +12,9 @@ from .base import Indicator
 class SMA(Indicator):
     """Simple Moving Average"""
 
-    def __init__(self, period: int = 20, column: str = "close", color: Optional[str] = None):
+    def __init__(
+        self, period: int = 20, column: str = "close", color: Optional[str] = None
+    ):
         """
         Initialize SMA indicator
 
@@ -30,9 +32,7 @@ class SMA(Indicator):
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate SMA"""
         result = df.copy()
-        result[f"sma_{self.period}"] = ta.sma(
-            result[self.column], length=self.period
-        )
+        result[f"sma_{self.period}"] = ta.sma(result[self.column], length=self.period)
         return result
 
     def get_plot_config(self) -> Dict[str, Any]:
@@ -72,9 +72,7 @@ class EMA(Indicator):
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate EMA"""
         result = df.copy()
-        result[f"ema_{self.period}"] = ta.ema(
-            result[self.column], length=self.period
-        )
+        result[f"ema_{self.period}"] = ta.ema(result[self.column], length=self.period)
         return result
 
     def get_plot_config(self) -> Dict[str, Any]:
@@ -187,9 +185,7 @@ class BollingerBands(Indicator):
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate Bollinger Bands"""
         result = df.copy()
-        bb_data = ta.bbands(
-            result["close"], length=self.period, std=self.std
-        )
+        bb_data = ta.bbands(result["close"], length=self.period, std=self.std)
         if bb_data is not None:
             for col in bb_data.columns:
                 result[col] = bb_data[col]
@@ -282,4 +278,3 @@ class ATR(Indicator):
         config = super().get_plot_config()
         config.update({"color": "green", "label": f"ATR({self.period})"})
         return config
-

@@ -75,4 +75,3 @@ def validate_ohlcv_data(df: pd.DataFrame) -> bool:
         raise ValueError(f"Null values found in required columns:\n{null_counts}")
 
     return True
-

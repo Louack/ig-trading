@@ -40,4 +40,3 @@ class CustomIndicator(Indicator):
         config = super().get_plot_config()
         config.update({"color": "blue", "label": "Custom Indicator"})
         return config
-
