@@ -90,13 +90,11 @@ class IGDataSource(DataSource):
             recovery_timeout=config.get("circuit_breaker_timeout", 60),
         )
 
-        # Rate limiter: use injected or create from config
         self.rate_limiter = rate_limiter or RateLimiter(
             max_calls=config.get("rate_limit_calls", 40),
             period_seconds=config.get("rate_limit_period", 60),
         )
 
-        # Retry configuration: use injected or create from config
         self.retry_config = retry_config or RetryConfig(
             max_attempts=self.max_retries,
             base_delay=config.get("retry_base_delay", 1.0),
@@ -119,6 +117,7 @@ class IGDataSource(DataSource):
                     api_key=self.api_key,
                     identifier=self.identifier,
                     password=self.password,
+                    rate_limiter=self.rate_limiter,
                 )
 
                 # Test connection by getting account info
@@ -206,9 +205,6 @@ class IGDataSource(DataSource):
             return None
 
         try:
-            # Apply rate limiting
-            self.rate_limiter.acquire()
-
             # Fetch with retries and circuit breaker
             def _fetch():
                 config = self.timeframe_mapping[timeframe]
