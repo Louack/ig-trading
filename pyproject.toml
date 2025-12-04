@@ -15,6 +15,7 @@ dependencies = [
     "pandas>=2.3.3",
     "pandas-ta>=0.4.71b0",
     "polygon-api-client>=1.14.0",
+    "yfinance>=0.2.0",
     "pydantic==2.11.5",
     "pydantic-core==2.33.2",
     "python-dotenv==1.1.0",

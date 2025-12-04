@@ -7,6 +7,7 @@ from typing import Dict, Any, Type, List
 from ..interfaces.data_source import DataSource
 from ..sources.ig_data_source import IGDataSource
 from ..sources.massive_data_source import MassiveDataSource
+from ..sources.yfinance_data_source import YFinanceDataSource
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class DataSourceFactory:
     _sources: Dict[str, Type[DataSource]] = {
         "ig": IGDataSource,
         "massive": MassiveDataSource,
+        "yfinance": YFinanceDataSource,
     }
 
     @classmethod

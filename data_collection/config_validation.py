@@ -10,7 +10,7 @@ class DataSourceConfig(BaseModel):
     """Base configuration for data sources"""
 
     name: str = Field(..., min_length=1, max_length=100)
-    type: Literal["ig", "massive"] = Field(...)
+    type: Literal["ig", "massive", "yfinance"] = Field(...)
 
     # Resilience configuration
     timeout: int = Field(default=30, gt=0, le=300)
@@ -66,6 +66,12 @@ class MassiveDataSourceConfig(DataSourceConfig):
         return v
 
 
+class YFinanceDataSourceConfig(DataSourceConfig):
+    """Configuration specific to YFinance data source"""
+
+    type: Literal["yfinance"] = Field(default="yfinance")
+
+
 class StorageConfig(BaseModel):
     """Configuration for data storage"""
 
@@ -101,6 +107,8 @@ class CollectorConfig(BaseModel):
                 IGDataSourceConfig(**source_config)
             elif source_type == "massive":
                 MassiveDataSourceConfig(**source_config)
+            elif source_type == "yfinance":
+                YFinanceDataSourceConfig(**source_config)
             else:
                 raise ValueError(f"Unknown data source type: {source_type}")
 
@@ -143,5 +151,7 @@ def validate_data_source_config(
         return IGDataSourceConfig(**config)
     elif source_type == "massive":
         return MassiveDataSourceConfig(**config)
+    elif source_type == "yfinance":
+        return YFinanceDataSourceConfig(**config)
     else:
         raise ValueError(f"Unknown data source type: {source_type}")

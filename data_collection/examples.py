@@ -91,6 +91,49 @@ def example_massive_basic():
     collector.disconnect_all()
 
 
+def example_yfinance_basic():
+    """Example: YFinance data source - single stock, 1D timeframe"""
+
+    config = {
+        "data_sources": {
+            "yfinance": {
+                "type": "yfinance",
+                "name": "YFinance",
+                "rate_limit_calls": 30,
+                "rate_limit_period": 60,
+            }
+        },
+        "storage": {"base_dir": "data", "timeframes": ["1D"]},
+        "enable_health_checks": True,
+    }
+
+    # Validate configuration
+    validated_config = validate_config(config)
+
+    # Create storage with configured timeframes
+    storage = DataStorage(
+        data_dir=validated_config.storage.base_dir,
+        timeframes=config["storage"]["timeframes"],
+    )
+
+    # Initialize collector with custom storage
+    collector = DataCollector(validated_config.data_sources, storage=storage)
+
+    # Collect and store data for a single stock
+    success = collector.collect_and_store(
+        symbol="NDX", timeframe="1D", source_name="yfinance"
+    )
+
+    if success:
+        # Load stored data
+        df = collector.load_data("NDX", "1D")
+        if df is not None:
+            print(f"Loaded {len(df)} data points for NDX")
+            print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
+
+    collector.disconnect_all()
+
+
 def example_context_manager():
     """Example 2: Using context manager for automatic cleanup"""
 
@@ -331,8 +374,9 @@ if __name__ == "__main__":
 
     # Run examples
     examples = [
-        ("Basic Usage", example_basic_usage),
-        ("Massive Basic", example_massive_basic),
+        #("Basic Usage", example_basic_usage),
+        #("Massive Basic", example_massive_basic),
+        ("YFinance Basic", example_yfinance_basic),
         # ("Context Manager", example_context_manager),
         # ("Health Monitoring", example_health_monitoring),
         # ("Custom Alert Handler", example_custom_alert_handler),

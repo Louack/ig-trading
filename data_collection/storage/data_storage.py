@@ -81,6 +81,13 @@ class DataStorage:
             if filepath.exists():
                 existing_df = pd.read_csv(filepath)
                 existing_df["timestamp"] = pd.to_datetime(existing_df["timestamp"])
+                # Normalize to timezone-naive (UTC) for consistency
+                if existing_df["timestamp"].dt.tz is not None:
+                    existing_df["timestamp"] = existing_df["timestamp"].dt.tz_localize(None)
+
+                # Normalize new data timestamps to timezone-naive
+                if new_df["timestamp"].dt.tz is not None:
+                    new_df["timestamp"] = new_df["timestamp"].dt.tz_localize(None)
 
                 # Append new data
                 combined_df = pd.concat([existing_df, new_df], ignore_index=True)
@@ -97,6 +104,9 @@ class DataStorage:
                     f"Appending {len(new_df)} new points to existing {len(existing_df)} points"
                 )
             else:
+                # Normalize timestamps to timezone-naive for new files
+                if new_df["timestamp"].dt.tz is not None:
+                    new_df["timestamp"] = new_df["timestamp"].dt.tz_localize(None)
                 combined_df = new_df
                 logger.info(f"Creating new file with {len(new_df)} data points")
 
