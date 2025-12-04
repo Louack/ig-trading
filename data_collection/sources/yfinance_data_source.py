@@ -29,6 +29,35 @@ class YFinanceDataSource(DataSource):
         "1M": "1mo",
     }
 
+    # Common index symbols that need caret prefix for YFinance
+    INDEX_SYMBOLS = {
+        "NDX": "^NDX",  # NASDAQ-100
+        "SPX": "^GSPC",  # S&P 500
+        "DJI": "^DJI",  # Dow Jones
+        "IXIC": "^IXIC",  # NASDAQ Composite
+    }
+
+    @classmethod
+    def _normalize_symbol(cls, symbol: str) -> str:
+        """
+        Normalize symbol for YFinance API
+
+        YFinance requires caret (^) prefix for indices to get proper OHLC data.
+        Without the caret, indices may return identical OHLC values.
+
+        Args:
+            symbol: Original symbol
+
+        Returns:
+            Normalized symbol with caret prefix if it's a known index
+        """
+        # If already has caret, return as-is
+        if symbol.startswith("^"):
+            return symbol
+
+        # Check if it's a known index symbol
+        return cls.INDEX_SYMBOLS.get(symbol, symbol)
+
     def __init__(
         self,
         config: Dict[str, Any],
@@ -165,7 +194,15 @@ class YFinanceDataSource(DataSource):
             end_date = end_date or datetime.now()
             start_date = start_date or (end_date - timedelta(days=365))
 
-            ticker = self._client.rest.Ticker(symbol)
+            # Normalize symbol for YFinance (add caret prefix for indices)
+            normalized_symbol = self._normalize_symbol(symbol)
+            if normalized_symbol != symbol:
+                logger.info(
+                    f"Normalizing symbol '{symbol}' to '{normalized_symbol}' for YFinance "
+                    f"(indices require caret prefix for proper OHLC data)"
+                )
+
+            ticker = self._client.rest.Ticker(normalized_symbol)
 
             df = ticker.history(
                 start=start_date,
@@ -174,12 +211,15 @@ class YFinanceDataSource(DataSource):
             )
 
             if df is None or df.empty:
-                logger.warning(f"No data returned for {symbol} ({timeframe})")
+                logger.warning(
+                    f"No data returned for {normalized_symbol} ({timeframe})"
+                )
                 return None
 
             if limit:
                 df = df.tail(limit)
 
+            # Use original symbol in MarketData (not normalized) to preserve user's symbol
             market_data = self._convert_yfinance_response(df, symbol, timeframe)
 
             logger.info(

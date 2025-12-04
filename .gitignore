@@ -11,3 +11,6 @@ env.bak/
 venv.bak/
 
 .cursor/
+
+.ipynb_checkpoints/
+*.ipynb_checkpoints
