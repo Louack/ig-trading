@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Any, Type, List
 from ..interfaces.data_source import DataSource
 from ..sources.ig_data_source import IGDataSource
+from ..sources.massive_data_source import MassiveDataSource
 
 logger = logging.getLogger(__name__)
 
@@ -15,16 +16,23 @@ class DataSourceFactory:
 
     _sources: Dict[str, Type[DataSource]] = {
         'ig': IGDataSource,
+        'massive': MassiveDataSource,
     }
     
     @classmethod
-    def create_data_source(cls, source_type: str, config: Dict[str, Any]) -> DataSource:
+    def create_data_source(
+        cls, 
+        source_type: str, 
+        config: Dict[str, Any],
+        **dependencies: Any
+    ) -> DataSource:
         """
         Create a data source instance
         
         Args:
-            source_type: Type of data source ('ig', 'yahoo', etc.)
+            source_type: Type of data source ('ig', 'massive', etc.)
             config: Configuration for the data source
+            **dependencies: Optional dependencies to inject (client, circuit_breaker, etc.)
             
         Returns:
             DataSource instance
@@ -41,7 +49,9 @@ class DataSourceFactory:
         try:
             # Add source type to config
             config['source_type'] = source_type
-            source_instance = source_class(config)
+            
+            # Pass dependencies if provided, otherwise use config defaults
+            source_instance = source_class(config, **dependencies)
             
             logger.info(f"Created {source_type} data source")
             return source_instance

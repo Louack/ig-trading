@@ -3,15 +3,15 @@ IG API data source implementation
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 from api_gateway.ig_client.master_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
 from ..interfaces.data_source import DataSource
 from ..interfaces.market_data import MarketData, MarketDataPoint, PriceData
-from ..resilience import CircuitBreaker, RateLimiter, RetryConfig, retry_with_backoff
-from ..alerting import escalate_error, AlertSeverity
+from common.resilience import CircuitBreaker, RateLimiter, RetryConfig, retry_with_backoff
+from common.alerting import escalate_error, AlertSeverity
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +19,45 @@ logger = logging.getLogger(__name__)
 class IGDataSource(DataSource):
     """IG API data source implementation"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(
+        self, 
+        config: Dict[str, Any],
+        client: Optional[IGClient] = None,
+        circuit_breaker: Optional[CircuitBreaker] = None,
+        rate_limiter: Optional[RateLimiter] = None,
+        retry_config: Optional[RetryConfig] = None,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        identifier: Optional[str] = None,
+        password: Optional[str] = None
+    ):
+        """
+        Initialize IG data source
+        
+        Args:
+            config: Configuration dictionary
+            client: Optional IGClient instance (created if not provided)
+            circuit_breaker: Optional CircuitBreaker instance (created from config if not provided)
+            rate_limiter: Optional RateLimiter instance (created from config if not provided)
+            retry_config: Optional RetryConfig instance (created from config if not provided)
+            base_url: Optional base URL (overrides config/settings)
+            api_key: Optional API key (overrides config/settings)
+            identifier: Optional identifier (overrides config/settings)
+            password: Optional password (overrides config/settings)
+        """
         super().__init__(config)
         
         # IG-specific configuration
         self.account_type = config.get('account_type', 'demo')
-        self.base_url = BASE_URLS[self.account_type]
-        self.api_key = API_KEYS[self.account_type]
-        self.identifier = IDENTIFIERS[self.account_type]
-        self.password = PASSWORDS[self.account_type]
         
-        # IG client
-        self._client: Optional[IGClient] = None
+        # Use injected values or fall back to config/settings
+        self.base_url = base_url or config.get('base_url') or BASE_URLS[self.account_type]
+        self.api_key = api_key or config.get('api_key') or API_KEYS[self.account_type]
+        self.identifier = identifier or config.get('identifier') or IDENTIFIERS[self.account_type]
+        self.password = password or config.get('password') or PASSWORDS[self.account_type]
+        
+        # IG client (will be created in connect() if not provided)
+        self._client: Optional[IGClient] = client
         self._connected = False
         
         # Timeframe mapping
@@ -46,21 +73,20 @@ class IGDataSource(DataSource):
         self.timeout = config.get('timeout', 30)
         self.max_retries = config.get('max_retries', 3)
         
-        # Circuit breaker: open after 5 failures, wait 60s before retry
-        self.circuit_breaker = CircuitBreaker(
+        # Circuit breaker: use injected or create from config
+        self.circuit_breaker = circuit_breaker or CircuitBreaker(
             failure_threshold=config.get('circuit_breaker_threshold', 5),
             recovery_timeout=config.get('circuit_breaker_timeout', 60)
         )
         
-        # Rate limiter: IG limits are ~60 requests per minute
-        # We'll be conservative: 40 requests per 60 seconds
-        self.rate_limiter = RateLimiter(
+        # Rate limiter: use injected or create from config
+        self.rate_limiter = rate_limiter or RateLimiter(
             max_calls=config.get('rate_limit_calls', 40),
             period_seconds=config.get('rate_limit_period', 60)
         )
         
-        # Retry configuration
-        self.retry_config = RetryConfig(
+        # Retry configuration: use injected or create from config
+        self.retry_config = retry_config or RetryConfig(
             max_attempts=self.max_retries,
             base_delay=config.get('retry_base_delay', 1.0),
             max_delay=config.get('retry_max_delay', 30.0),
@@ -70,6 +96,10 @@ class IGDataSource(DataSource):
     
     def connect(self) -> bool:
         """Establish connection to IG API"""
+        # If client already injected and connected, skip
+        if self._client is not None and self._connected:
+            return True
+            
         try:
             # Use retry mechanism for connection
             def _connect():
@@ -165,17 +195,17 @@ class IGDataSource(DataSource):
             # Fetch with retries and circuit breaker
             def _fetch():
                 config = self.timeframe_mapping[timeframe]
-                
+
                 # Use limit if provided, otherwise use default
                 points = limit if limit else config['points']
-                
+
                 # Fetch data from IG API (using symbol as epic for IG)
                 response = self._client.markets.get_prices_by_points(
                     epic=symbol,
                     resolution=config['resolution'],
                     num_points=points
-                )
-                
+                    )
+
                 return response
             
             # Execute with circuit breaker and retry
@@ -227,23 +257,35 @@ class IGDataSource(DataSource):
         data_points = []
         
         for price_data in prices:
-            # Extract price information
+            snapshot_time = price_data.get('snapshotTime')
+            if not snapshot_time:
+                logger.warning(f"Skipping price entry without timestamp for {symbol}")
+                continue
+            
+            try:
+                timestamp = datetime.strptime(snapshot_time, '%Y/%m/%d %H:%M:%S')
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid timestamp format for {symbol}: {snapshot_time}, error: {e}")
+                continue
+            
             open_price = self._extract_price_data(price_data.get('openPrice', {}))
             high_price = self._extract_price_data(price_data.get('highPrice', {}))
             low_price = self._extract_price_data(price_data.get('lowPrice', {}))
             close_price = self._extract_price_data(price_data.get('closePrice', {}))
             
-            # Create data point
+            if not all([open_price.ohlc_price, high_price.ohlc_price, low_price.ohlc_price, close_price.ohlc_price]):
+                logger.warning(f"Skipping price entry with missing OHLC data for {symbol}")
+                continue
+            
             data_point = MarketDataPoint(
-                timestamp=datetime.fromisoformat(price_data['snapshotTimeUTC'].replace('Z', '+00:00')),
+                timestamp=timestamp,
                 open_price=open_price,
                 high_price=high_price,
                 low_price=low_price,
                 close_price=close_price,
                 volume=price_data.get('lastTradedVolume'),
                 metadata={
-                    'ig_snapshot_time': price_data.get('snapshotTimeUTC'),
-                    'ig_last_update': price_data.get('lastUpdateTimeUTC')
+                    'ig_snapshot_time': price_data.get('snapshotTime')
                 }
             )
             

@@ -10,7 +10,7 @@ class DataSourceConfig(BaseModel):
     """Base configuration for data sources"""
     
     name: str = Field(..., min_length=1, max_length=100)
-    type: Literal['ig', 'yahoo', 'alpha_vantage'] = Field(...)
+    type: Literal['ig', 'massive'] = Field(...)
     
     # Resilience configuration
     timeout: int = Field(default=30, gt=0, le=300)
@@ -50,18 +50,20 @@ class IGDataSourceConfig(DataSourceConfig):
         return v
 
 
-class YahooDataSourceConfig(DataSourceConfig):
-    """Configuration specific to Yahoo Finance data source"""
+class MassiveDataSourceConfig(DataSourceConfig):
+    """Configuration specific to Massive data source"""
     
-    type: Literal['yahoo'] = Field(default='yahoo')
-    api_key: Optional[str] = Field(default=None)
-
-
-class AlphaVantageDataSourceConfig(DataSourceConfig):
-    """Configuration specific to Alpha Vantage data source"""
-    
-    type: Literal['alpha_vantage'] = Field(default='alpha_vantage')
+    type: Literal['massive'] = Field(default='massive')
     api_key: str = Field(..., min_length=1)
+    tier: Literal['free', 'starter', 'developer', 'advanced'] = Field(default='free')
+    
+    @field_validator('api_key')
+    @classmethod
+    def validate_api_key(cls, v: str) -> str:
+        """Validate API key format"""
+        if not v or len(v) < 10:
+            raise ValueError("Invalid Massive API key")
+        return v
 
 
 class StorageConfig(BaseModel):
@@ -75,7 +77,7 @@ class StorageConfig(BaseModel):
 
 
 class CollectorConfig(BaseModel):
-    """Configuration for unified data collector"""
+    """Configuration for data collector"""
     
     data_sources: Dict[str, Dict[str, Any]] = Field(...)
     storage: StorageConfig = Field(default_factory=StorageConfig)
@@ -95,10 +97,8 @@ class CollectorConfig(BaseModel):
             
             if source_type == 'ig':
                 IGDataSourceConfig(**source_config)
-            elif source_type == 'yahoo':
-                YahooDataSourceConfig(**source_config)
-            elif source_type == 'alpha_vantage':
-                AlphaVantageDataSourceConfig(**source_config)
+            elif source_type == 'massive':
+                MassiveDataSourceConfig(**source_config)
             else:
                 raise ValueError(f"Unknown data source type: {source_type}")
         
@@ -137,10 +137,8 @@ def validate_data_source_config(source_type: str, config: Dict[str, Any]) -> Dat
     """
     if source_type == 'ig':
         return IGDataSourceConfig(**config)
-    elif source_type == 'yahoo':
-        return YahooDataSourceConfig(**config)
-    elif source_type == 'alpha_vantage':
-        return AlphaVantageDataSourceConfig(**config)
+    elif source_type == 'massive':
+        return MassiveDataSourceConfig(**config)
     else:
         raise ValueError(f"Unknown data source type: {source_type}")
 
