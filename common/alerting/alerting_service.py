@@ -3,7 +3,7 @@ Error alerting and escalation system
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 from enum import Enum
 
