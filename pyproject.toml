@@ -23,6 +23,7 @@ dependencies = [
     "tenacity>=9.1.2",
     "typing-extensions==4.13.2",
     "typing-inspection==0.4.1",
+    "backtrader>=1.9.78.123",
 ]
 
 [dependency-groups]
