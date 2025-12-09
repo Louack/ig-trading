@@ -50,3 +50,7 @@ PASSWORDS = {
     "demo": IG_DEMO_PASSWORD,
     "prod": IG_PROD_PASSWORD,
 }
+
+# Telegram bot configuration (alert transport)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", default="")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", default="")
