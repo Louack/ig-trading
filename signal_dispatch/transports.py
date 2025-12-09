@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Dict, Any, Protocol
 import json
 import logging
-import requests
+import httpx
 from settings import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 logger = logging.getLogger(__name__)
@@ -64,8 +64,9 @@ class TelegramTransport:
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
         data = {"chat_id": self.chat_id, "text": text}
         try:
-            resp = requests.post(url, data=data, timeout=self.timeout)
-            resp.raise_for_status()
+            with httpx.Client(timeout=self.timeout) as client:
+                resp = client.post(url, data=data)
+                resp.raise_for_status()
         except Exception as exc:
             logger.error(
                 "Telegram transport failed",
