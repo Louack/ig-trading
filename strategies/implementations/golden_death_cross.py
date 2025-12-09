@@ -74,7 +74,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
         if not self._validate_golden_cross_signal(data, index):
             return None
         return self._create_signal(
-            epic=self._get_epic(data, index),
+            instrument=self._get_instrument(data, index),
             signal_type=SignalType.BUY,
             price=current_row["closePrice"],
             timestamp=current_row["timestamp"],
@@ -85,6 +85,8 @@ class GoldenDeathCrossStrategy(BaseStrategy):
                 "long_ma": current_row[f"sma_{self.long_ma_period}"],
                 "rsi": self._get_rsi_value(current_row),
                 "volume_ratio": self._get_volume_ratio(data, index),
+                "source": self._get_source(data),
+                "instrument_type": self._get_instrument_type(data),
             },
         )
 
@@ -94,7 +96,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
         if not self._validate_death_cross_signal(data, index):
             return None
         return self._create_signal(
-            epic=self._get_epic(data, index),
+            instrument=self._get_instrument(data, index),
             signal_type=SignalType.SELL,
             price=current_row["closePrice"],
             timestamp=current_row["timestamp"],
@@ -105,8 +107,20 @@ class GoldenDeathCrossStrategy(BaseStrategy):
                 "long_ma": current_row[f"sma_{self.long_ma_period}"],
                 "rsi": self._get_rsi_value(current_row),
                 "volume_ratio": self._get_volume_ratio(data, index),
+                "source": self._get_source(data),
+                "instrument_type": self._get_instrument_type(data),
             },
         )
+
+    def _get_source(self, data: pd.DataFrame) -> str:
+        if "source" in data.columns and len(data):
+            return str(data["source"].iloc[0])
+        return "unknown"
+
+    def _get_instrument_type(self, data: pd.DataFrame) -> str:
+        if "instrument_type" in data.columns and len(data):
+            return str(data["instrument_type"].iloc[0])
+        return "unknown"
 
     def _add_indicators(self, data: pd.DataFrame) -> pd.DataFrame:
         """Add required technical indicators using the shared TA module."""
@@ -141,7 +155,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
                 df[target] = df[source]
         return df
 
-    def _get_epic(self, data: pd.DataFrame, index: int) -> str:
+    def _get_instrument(self, data: pd.DataFrame, index: int) -> str:
         """Return instrument identifier with backward compatibility."""
         if "symbol" in data.columns:
             return data["symbol"].iloc[index]
@@ -280,7 +294,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
 
     def _create_signal(
         self,
-        epic: str,
+        instrument: str,
         signal_type: SignalType,
         price: float,
         timestamp: datetime,
@@ -296,7 +310,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
             confidence = 0.6
 
         return Signal(
-            epic=epic,
+            instrument=instrument,
             signal_type=signal_type,
             strength=strength,
             timestamp=timestamp,

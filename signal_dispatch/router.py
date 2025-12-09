@@ -16,7 +16,7 @@ from signal_dispatch.transports import Transport
 class DispatchConfig:
     min_strength: Optional[str] = None  # "WEAK" | "MEDIUM" | "STRONG"
     allowed_strategies: Optional[Set[str]] = None
-    allowed_symbols: Optional[Set[str]] = None
+    allowed_instruments: Optional[Set[str]] = None
     dedupe: bool = True
 
 
@@ -26,19 +26,23 @@ def _strength_rank(value: str) -> int:
 
 
 def _dedupe_key(signal: Signal) -> str:
-    raw = f"{signal.epic}-{signal.signal_type.value}-{signal.timestamp.isoformat()}"
+    raw = (
+        f"{signal.instrument}-{signal.signal_type.value}-{signal.timestamp.isoformat()}"
+    )
     return hashlib.sha256(raw.encode()).hexdigest()[:12]
 
 
 def _format_payload(signal: Signal) -> Dict[str, Any]:
     return {
-        "epic": signal.epic,
+        "instrument": signal.instrument,
         "signal_type": signal.signal_type.value,
         "strength": signal.strength.value,
         "timestamp": signal.timestamp.isoformat(),
         "price": signal.price,
         "confidence": signal.confidence,
         "metadata": signal.metadata or {},
+        "source": (signal.metadata or {}).get("source"),
+        "instrument_type": (signal.metadata or {}).get("instrument_type"),
     }
 
 
@@ -57,7 +61,7 @@ def dispatch_signals(
             and sig.metadata.get("strategy") not in cfg.allowed_strategies
         ):
             continue
-        if cfg.allowed_symbols and sig.epic not in cfg.allowed_symbols:
+        if cfg.allowed_instruments and sig.instrument not in cfg.allowed_instruments:
             continue
         if cfg.min_strength and _strength_rank(sig.strength.value) < _strength_rank(
             cfg.min_strength

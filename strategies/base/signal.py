@@ -24,7 +24,7 @@ class SignalStrength(Enum):
 class Signal:
     """Represents a trading signal"""
 
-    epic: str
+    instrument: str
     signal_type: SignalType
     strength: SignalStrength
     timestamp: datetime
@@ -45,7 +45,7 @@ class Signal:
     def to_dict(self) -> Dict[str, Any]:
         """Convert signal to dictionary"""
         return {
-            "epic": self.epic,
+            "instrument": self.instrument,
             "signal_type": self.signal_type.value,
             "strength": self.strength.value,
             "timestamp": self.timestamp.isoformat(),
@@ -58,7 +58,7 @@ class Signal:
     def from_dict(cls, data: Dict[str, Any]) -> "Signal":
         """Create signal from dictionary"""
         return cls(
-            epic=data["epic"],
+            instrument=data.get("instrument") or data.get("epic"),
             signal_type=SignalType(data["signal_type"]),
             strength=SignalStrength(data["strength"]),
             timestamp=datetime.fromisoformat(data["timestamp"]),

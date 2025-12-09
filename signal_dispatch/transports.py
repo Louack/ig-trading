@@ -43,17 +43,22 @@ class TelegramTransport:
         self.timeout = timeout
 
     def send(self, payload: Dict[str, Any]) -> None:
-        metadata_text = json.dumps(
-            payload.get("metadata") or {}, default=str, ensure_ascii=False
+        metadata = payload.get("metadata") or {}
+        source = payload.get("source") or metadata.get("source")
+        instrument_type = payload.get("instrument_type") or metadata.get(
+            "instrument_type"
         )
+        metadata_text = json.dumps(metadata, default=str, ensure_ascii=False)
         text = (
             f"Signal Alert\n"
-            f"Epic: {payload.get('epic')}\n"
+            f"Instrument: {payload.get('instrument')}\n"
             f"Type: {payload.get('signal_type')}\n"
             f"Strength: {payload.get('strength')}\n"
             f"Price: {payload.get('price')}\n"
             f"Confidence: {payload.get('confidence')}\n"
             f"Timestamp: {payload.get('timestamp')}\n"
+            f"Source: {source}\n"
+            f"Instrument Type: {instrument_type}\n"
             f"Metadata: {metadata_text}"
         )
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"

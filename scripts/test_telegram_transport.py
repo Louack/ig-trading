@@ -24,6 +24,8 @@ def main() -> None:
     data_path = PROJECT_ROOT / "data_collection" / "data" / "1D" / "NDX_YFinance.csv"
     df = pd.read_csv(data_path)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
+    # Add instrument_type for IG CFDs
+    df["instrument_type"] = "CFD"
 
     # Limit data to as-of date
     df = df[df["timestamp"] <= AS_OF].copy()
