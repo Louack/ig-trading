@@ -76,20 +76,28 @@ class BaseStrategy(ABC):
         Returns:
             True if data is valid
         """
-        required_columns = [
-            "epic",
+        required_columns = {
             "timestamp",
-            "openPrice_mid",
-            "highPrice_mid",
-            "lowPrice_mid",
-            "closePrice_mid",
+            "openPrice",
+            "highPrice",
+            "lowPrice",
+            "closePrice",
             "lastTradedVolume",
-        ]
+        }
+        metadata_columns = {"symbol", "timeframe", "source"}
 
-        missing_columns = [col for col in required_columns if col not in data.columns]
-        if missing_columns:
-            self.logger.error(f"Missing required columns: {missing_columns}")
+        missing_core = [col for col in required_columns if col not in data.columns]
+        if missing_core:
+            self.logger.error(f"Missing required columns: {missing_core}")
             return False
+
+        if not ({"symbol"}.issubset(data.columns) or {"epic"}.issubset(data.columns)):
+            self.logger.error("Missing instrument identifier column (symbol/epic)")
+            return False
+
+        missing_meta = [col for col in metadata_columns if col not in data.columns]
+        if missing_meta:
+            self.logger.warning(f"Missing optional metadata columns: {missing_meta}")
 
         if data.empty:
             self.logger.error("Data is empty")

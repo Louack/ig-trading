@@ -1,8 +1,8 @@
 import pandas as pd
-import pandas_ta as ta
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
+from technical_analysis.indicators import SMA, RSI
 from ..base.strategy import BaseStrategy
 from ..base.signal import Signal, SignalType, SignalStrength
 
@@ -28,85 +28,130 @@ class GoldenDeathCrossStrategy(BaseStrategy):
         self.rsi_period = config.get("rsi_period", 14)
         self.rsi_oversold = config.get("rsi_oversold", 30)
         self.rsi_overbought = config.get("rsi_overbought", 70)
+        self.rsi_column = f"rsi_{self.rsi_period}"
+
+        # Volume filter parameters
+        self.volume_sma_period = config.get("volume_sma_period", 20)
+
+        # Indicator instances
+        self.short_sma_indicator = SMA(period=self.short_ma_period, column="close")
+        self.long_sma_indicator = SMA(period=self.long_ma_period, column="close")
+        self.rsi_indicator = RSI(period=self.rsi_period)
+        self.volume_sma_indicator = SMA(period=self.volume_sma_period, column="volume")
 
     def generate_signals(self, data: pd.DataFrame) -> List[Signal]:
-        """Generate Golden Cross / Death Cross signals"""
+        """Generate signals across the provided dataset (caller controls window)."""
         if not self.validate_data(data):
             return []
 
-        # Add required indicators
         data = self._add_indicators(data)
+        warmup = max(
+            self.short_ma_period,
+            self.long_ma_period,
+            self.confirmation_periods,
+            1,
+        )
+        signals: List[Signal] = []
 
-        # Generate crossover signals
-        signals = []
-
-        # Look for crossovers in the last few periods
-        for i in range(len(data) - self.confirmation_periods, len(data)):
-            if i < 1:  # Need at least 2 periods to detect crossover
-                continue
-
+        for i in range(warmup, len(data)):
             current_row = data.iloc[i]
             previous_row = data.iloc[i - 1]
 
-            # Check for Golden Cross (bullish crossover)
             if self._is_golden_cross(previous_row, current_row):
-                if self._validate_golden_cross_signal(data, i):
-                    signal = self._create_signal(
-                        epic=data["epic"].iloc[i],
-                        signal_type=SignalType.BUY,
-                        price=current_row["closePrice_mid"],
-                        timestamp=current_row["timestamp"],
-                        strength=self._calculate_signal_strength(data, i, "golden"),
-                        metadata={
-                            "strategy": "golden_cross",
-                            "short_ma": current_row[f"sma_{self.short_ma_period}"],
-                            "long_ma": current_row[f"sma_{self.long_ma_period}"],
-                            "rsi": current_row["rsi_14"],
-                            "volume_ratio": self._get_volume_ratio(data, i),
-                        },
-                    )
+                signal = self._build_golden_cross_signal(data, i, current_row)
+                if signal:
                     signals.append(signal)
-
-            # Check for Death Cross (bearish crossover)
             elif self._is_death_cross(previous_row, current_row):
-                if self._validate_death_cross_signal(data, i):
-                    signal = self._create_signal(
-                        epic=data["epic"].iloc[i],
-                        signal_type=SignalType.SELL,
-                        price=current_row["closePrice_mid"],
-                        timestamp=current_row["timestamp"],
-                        strength=self._calculate_signal_strength(data, i, "death"),
-                        metadata={
-                            "strategy": "death_cross",
-                            "short_ma": current_row[f"sma_{self.short_ma_period}"],
-                            "long_ma": current_row[f"sma_{self.long_ma_period}"],
-                            "rsi": current_row["rsi_14"],
-                            "volume_ratio": self._get_volume_ratio(data, i),
-                        },
-                    )
+                signal = self._build_death_cross_signal(data, i, current_row)
+                if signal:
                     signals.append(signal)
 
         return signals
 
+    def _build_golden_cross_signal(
+        self, data: pd.DataFrame, index: int, current_row: pd.Series
+    ) -> Optional[Signal]:
+        if not self._validate_golden_cross_signal(data, index):
+            return None
+        return self._create_signal(
+            epic=self._get_epic(data, index),
+            signal_type=SignalType.BUY,
+            price=current_row["closePrice"],
+            timestamp=current_row["timestamp"],
+            strength=self._calculate_signal_strength(data, index, "golden"),
+            metadata={
+                "strategy": "golden_cross",
+                "short_ma": current_row[f"sma_{self.short_ma_period}"],
+                "long_ma": current_row[f"sma_{self.long_ma_period}"],
+                "rsi": self._get_rsi_value(current_row),
+                "volume_ratio": self._get_volume_ratio(data, index),
+            },
+        )
+
+    def _build_death_cross_signal(
+        self, data: pd.DataFrame, index: int, current_row: pd.Series
+    ) -> Optional[Signal]:
+        if not self._validate_death_cross_signal(data, index):
+            return None
+        return self._create_signal(
+            epic=self._get_epic(data, index),
+            signal_type=SignalType.SELL,
+            price=current_row["closePrice"],
+            timestamp=current_row["timestamp"],
+            strength=self._calculate_signal_strength(data, index, "death"),
+            metadata={
+                "strategy": "death_cross",
+                "short_ma": current_row[f"sma_{self.short_ma_period}"],
+                "long_ma": current_row[f"sma_{self.long_ma_period}"],
+                "rsi": self._get_rsi_value(current_row),
+                "volume_ratio": self._get_volume_ratio(data, index),
+            },
+        )
+
     def _add_indicators(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Add required technical indicators"""
-        # Moving averages
-        data[f"sma_{self.short_ma_period}"] = ta.sma(
-            data["closePrice_mid"], length=self.short_ma_period
-        )
-        data[f"sma_{self.long_ma_period}"] = ta.sma(
-            data["closePrice_mid"], length=self.long_ma_period
-        )
+        """Add required technical indicators using the shared TA module."""
+        df = self._prepare_indicator_inputs(data)
 
-        # RSI for filtering
+        df = self.short_sma_indicator.calculate(df)
+        df = self.long_sma_indicator.calculate(df)
+
         if self.rsi_filter:
-            data["rsi_14"] = ta.rsi(data["closePrice_mid"], length=self.rsi_period)
+            df = self.rsi_indicator.calculate(df)
 
-        # Volume moving average for volume filter
         if self.volume_filter:
-            data["volume_sma"] = ta.sma(data["lastTradedVolume"], length=20)
+            df = self.volume_sma_indicator.calculate(df)
+            volume_col = f"sma_{self.volume_sma_period}"
+            if volume_col in df.columns:
+                df = df.rename(columns={volume_col: "volume_sma"})
 
-        return data
+        return df
+
+    def _prepare_indicator_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Create canonical OHLCV columns expected by indicators."""
+        df = data.copy()
+        column_map = {
+            "openPrice": "open",
+            "highPrice": "high",
+            "lowPrice": "low",
+            "closePrice": "close",
+            "lastTradedVolume": "volume",
+        }
+        for source, target in column_map.items():
+            if source in df.columns:
+                df[target] = df[source]
+        return df
+
+    def _get_epic(self, data: pd.DataFrame, index: int) -> str:
+        """Return instrument identifier with backward compatibility."""
+        if "symbol" in data.columns:
+            return data["symbol"].iloc[index]
+        if "epic" in data.columns:
+            return data["epic"].iloc[index]
+        return "unknown"
+
+    def _get_rsi_value(self, row: pd.Series) -> Any:
+        """Safely retrieve RSI value if present."""
+        return row[self.rsi_column] if self.rsi_column in row else None
 
     def _is_golden_cross(self, previous_row: pd.Series, current_row: pd.Series) -> bool:
         """Check if current period shows a Golden Cross"""
@@ -133,8 +178,12 @@ class GoldenDeathCrossStrategy(BaseStrategy):
         current_row = data.iloc[index]
 
         # RSI filter: Don't buy if overbought
-        if self.rsi_filter and current_row["rsi_14"] > self.rsi_overbought:
-            return False
+        if self.rsi_filter:
+            rsi_value = self._get_rsi_value(current_row)
+            if rsi_value is None:
+                self.logger.warning("RSI value missing; skipping RSI filter for row.")
+            elif rsi_value > self.rsi_overbought:
+                return False
 
         # Volume filter: Require above-average volume
         if self.volume_filter:
@@ -143,7 +192,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
                 return False
 
         # Trend confirmation: Price should be above long-term MA
-        if current_row["closePrice_mid"] < current_row[f"sma_{self.long_ma_period}"]:
+        if current_row["closePrice"] < current_row[f"sma_{self.long_ma_period}"]:
             return False
 
         return True
@@ -153,8 +202,12 @@ class GoldenDeathCrossStrategy(BaseStrategy):
         current_row = data.iloc[index]
 
         # RSI filter: Don't sell if oversold
-        if self.rsi_filter and current_row["rsi_14"] < self.rsi_oversold:
-            return False
+        if self.rsi_filter:
+            rsi_value = self._get_rsi_value(current_row)
+            if rsi_value is None:
+                self.logger.warning("RSI value missing; skipping RSI filter for row.")
+            elif rsi_value < self.rsi_oversold:
+                return False
 
         # Volume filter: Require above-average volume
         if self.volume_filter:
@@ -163,7 +216,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
                 return False
 
         # Trend confirmation: Price should be below long-term MA
-        if current_row["closePrice_mid"] > current_row[f"sma_{self.long_ma_period}"]:
+        if current_row["closePrice"] > current_row[f"sma_{self.long_ma_period}"]:
             return False
 
         return True
@@ -187,13 +240,14 @@ class GoldenDeathCrossStrategy(BaseStrategy):
 
         # RSI confirmation
         if self.rsi_filter:
-            rsi = current_row["rsi_14"]
-            if cross_type == "golden":
-                if 30 <= rsi <= 50:  # Good RSI for buying
-                    strength_score += 1
-            else:  # death cross
-                if 50 <= rsi <= 70:  # Good RSI for selling
-                    strength_score += 1
+            rsi = self._get_rsi_value(current_row)
+            if rsi is not None:
+                if cross_type == "golden":
+                    if 30 <= rsi <= 50:  # Good RSI for buying
+                        strength_score += 1
+                else:  # death cross
+                    if 50 <= rsi <= 70:  # Good RSI for selling
+                        strength_score += 1
 
         # MA separation
         ma_separation = abs(
@@ -217,8 +271,11 @@ class GoldenDeathCrossStrategy(BaseStrategy):
 
     def _get_volume_ratio(self, data: pd.DataFrame, index: int) -> float:
         """Calculate current volume vs average volume"""
-        current_volume = data.iloc[index]["lastTradedVolume"]
-        avg_volume = data.iloc[index]["volume_sma"]
+        if "volume_sma" not in data.columns:
+            return 1.0
+        current_row = data.iloc[index]
+        current_volume = current_row.get("lastTradedVolume", 0) or 0
+        avg_volume = current_row.get("volume_sma", 0) or 0
         return current_volume / avg_volume if avg_volume > 0 else 1.0
 
     def _create_signal(
