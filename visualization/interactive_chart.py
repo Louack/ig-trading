@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .indicators.base import Indicator
+from technical_analysis.indicators import Indicator
 from .utils import prepare_dataframe, validate_ohlcv_data
 
 

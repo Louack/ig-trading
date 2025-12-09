@@ -1,9 +1,7 @@
-"""
-Technical indicators for visualization
-"""
+"""Compatibility re-exports for visualization module."""
 
-from .base import Indicator
-from .pandas_ta_wrapper import (
+from technical_analysis.indicators import (
+    Indicator,
     SMA,
     EMA,
     RSI,
@@ -11,6 +9,7 @@ from .pandas_ta_wrapper import (
     BollingerBands,
     Stochastic,
     ATR,
+    CustomIndicator,
 )
 
 __all__ = [
@@ -22,4 +21,5 @@ __all__ = [
     "BollingerBands",
     "Stochastic",
     "ATR",
+    "CustomIndicator",
 ]

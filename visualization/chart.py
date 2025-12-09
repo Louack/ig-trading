@@ -6,7 +6,7 @@ from typing import List, Optional, Any, Tuple
 import pandas as pd
 import mplfinance as mpf
 
-from .indicators.base import Indicator
+from technical_analysis.indicators import Indicator
 from .utils import prepare_dataframe, validate_ohlcv_data
 
 
