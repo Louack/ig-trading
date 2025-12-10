@@ -9,7 +9,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from api_gateway.ig_client.master_client import IGClient
 from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
-from api_gateway.ig_client.core.logging_config import setup_logging, error_tracker
+from common.logging import setup_logging  # noqa: E402
+from api_gateway.ig_client.core.logging_config import error_tracker
 from api_gateway.ig_client.core import (
     IGAuthenticationError,
     IGValidationError,
@@ -21,8 +22,6 @@ from api_gateway.ig_client.core import (
     IGTimeoutError,
 )
 
-# Setup logging
-setup_logging(level="INFO")
 logger = logging.getLogger(__name__)
 
 
@@ -74,6 +73,7 @@ def handle_api_error(error: Exception, operation: str):
 
 def main():
     """Main function with comprehensive error handling"""
+    setup_logging()
     try:
         # Initialize client
         account_type = "demo"

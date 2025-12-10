@@ -54,3 +54,9 @@ PASSWORDS = {
 # Telegram bot configuration (alert transport)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", default="")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", default="")
+
+# Logging configuration defaults
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+LOG_FORMAT = os.getenv("LOG_FORMAT", "plain")
+LOG_DEST = os.getenv("LOG_DEST", "stdout")
+LOG_FILE = os.getenv("LOG_FILE", "")

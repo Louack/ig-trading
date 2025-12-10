@@ -11,10 +11,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from common.logging import setup_logging  # noqa: E402
 from backtesting.engine import run_golden_death_cross_backtest  # noqa: E402
 
 
 def main() -> None:
+    setup_logging()
     data_path = PROJECT_ROOT / "data_collection" / "data" / "1D" / "NDX_YFinance.csv"
     if not data_path.exists():
         raise FileNotFoundError(f"Data file not found: {data_path}")

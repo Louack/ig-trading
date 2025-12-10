@@ -10,6 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from common.logging import setup_logging  # noqa: E402
 from strategies.implementations.golden_death_cross import GoldenDeathCrossStrategy  # noqa: E402
 from signal_dispatch.transports import TelegramTransport  # noqa: E402
 
@@ -21,11 +22,11 @@ CONFIRMATION_PERIODS = 2
 
 
 def main() -> None:
+    setup_logging()
     data_path = PROJECT_ROOT / "data_collection" / "data" / "1D" / "NDX_YFinance.csv"
     df = pd.read_csv(data_path)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-    # Add instrument_type for IG CFDs
-    df["instrument_type"] = "CFD"
+    df["instrument_type"] = "INDEX"
 
     # Limit data to as-of date
     df = df[df["timestamp"] <= AS_OF].copy()

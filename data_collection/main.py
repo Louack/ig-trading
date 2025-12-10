@@ -5,7 +5,7 @@ Main script for the data collection service
 
 import sys
 import os
-import logging
+from common.logging import setup_logging  # noqa: E402
 from datetime import datetime
 
 # Add project root to path
@@ -15,16 +15,12 @@ from data_collection.data_collector import DataCollector
 from data_collection.factory.data_source_factory import DataSourceFactory
 from data_collection.config_validation import validate_config
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-
 logger = logging.getLogger(__name__)
 
 
 def main():
     """Main function to demonstrate data collection"""
+    setup_logging()
 
     config = {
         "data_sources": {
