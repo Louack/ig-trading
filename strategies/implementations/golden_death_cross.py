@@ -73,21 +73,14 @@ class GoldenDeathCrossStrategy(BaseStrategy):
     ) -> Optional[Signal]:
         if not self._validate_golden_cross_signal(data, index):
             return None
+        metadata = self._build_metadata(data, index, current_row, "golden_cross")
         return self._create_signal(
             instrument=self._get_instrument(data, index),
             signal_type=SignalType.BUY,
             price=current_row["closePrice"],
             timestamp=current_row["timestamp"],
             strength=self._calculate_signal_strength(data, index, "golden"),
-            metadata={
-                "strategy": "golden_cross",
-                "short_ma": current_row[f"sma_{self.short_ma_period}"],
-                "long_ma": current_row[f"sma_{self.long_ma_period}"],
-                "rsi": self._get_rsi_value(current_row),
-                "volume_ratio": self._get_volume_ratio(data, index),
-                "source": self._get_source(data),
-                "instrument_type": self._get_instrument_type(data),
-            },
+            metadata=metadata,
         )
 
     def _build_death_cross_signal(
@@ -95,22 +88,28 @@ class GoldenDeathCrossStrategy(BaseStrategy):
     ) -> Optional[Signal]:
         if not self._validate_death_cross_signal(data, index):
             return None
+        metadata = self._build_metadata(data, index, current_row, "death_cross")
         return self._create_signal(
             instrument=self._get_instrument(data, index),
             signal_type=SignalType.SELL,
             price=current_row["closePrice"],
             timestamp=current_row["timestamp"],
             strength=self._calculate_signal_strength(data, index, "death"),
-            metadata={
-                "strategy": "death_cross",
-                "short_ma": current_row[f"sma_{self.short_ma_period}"],
-                "long_ma": current_row[f"sma_{self.long_ma_period}"],
-                "rsi": self._get_rsi_value(current_row),
-                "volume_ratio": self._get_volume_ratio(data, index),
-                "source": self._get_source(data),
-                "instrument_type": self._get_instrument_type(data),
-            },
+            metadata=metadata,
         )
+
+    def _build_metadata(
+        self, data: pd.DataFrame, index: int, current_row: pd.Series, strategy_name: str
+    ) -> Dict[str, Any]:
+        return {
+            "strategy": strategy_name,
+            "short_ma": current_row[f"sma_{self.short_ma_period}"],
+            "long_ma": current_row[f"sma_{self.long_ma_period}"],
+            "rsi": self._get_rsi_value(current_row),
+            "volume_ratio": self._get_volume_ratio(data, index),
+            "source": self._get_source(data),
+            "instrument_type": self._get_instrument_type(data),
+        }
 
     def _get_source(self, data: pd.DataFrame) -> str:
         if "source" in data.columns and len(data):
@@ -255,7 +254,7 @@ class GoldenDeathCrossStrategy(BaseStrategy):
         # RSI confirmation
         if self.rsi_filter:
             rsi = self._get_rsi_value(current_row)
-            if rsi is not None:
+            if pd.notna(rsi):
                 if cross_type == "golden":
                     if 30 <= rsi <= 50:  # Good RSI for buying
                         strength_score += 1
