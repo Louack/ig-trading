@@ -119,7 +119,7 @@ def main():
         # logger.info(f"Collection results: {results}")
 
     except Exception as e:
-        logger.error(f"Error in main: {e}")
+        logger.error(f"Error in main: {e}", exc_info=True)
         raise
 
     finally:

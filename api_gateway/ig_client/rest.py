@@ -75,11 +75,13 @@ class IGRest:
             headers["_method"] = override_method
 
         logger.debug(
-            "Making API request",
-            method=method,
-            endpoint=endpoint,
-            version=version,
-            headers=headers,
+            f"Making API request: {method} {endpoint} (v{version})",
+            extra={
+                "method": method,
+                "endpoint": endpoint,
+                "version": version,
+                "has_auth": bool(headers.get("Authorization")),
+            }
         )
 
         try:

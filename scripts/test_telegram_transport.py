@@ -10,10 +10,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import logging
 from common.logging import setup_logging  # noqa: E402
 from strategies.implementations.golden_death_cross import GoldenDeathCrossStrategy  # noqa: E402
 from signal_dispatch.transports import TelegramTransport  # noqa: E402
 
+logger = logging.getLogger(__name__)
 
 AS_OF = pd.Timestamp("2025-05-13")
 SHORT_MA = 20
@@ -31,7 +33,7 @@ def main() -> None:
     # Limit data to as-of date
     df = df[df["timestamp"] <= AS_OF].copy()
     if df.empty:
-        print("No data up to AS_OF date")
+        logger.warning("No data up to AS_OF date")
         return
 
     # Live-style window: warm-up + small cushion
@@ -56,7 +58,7 @@ def main() -> None:
     signals = strat.generate_signals(recent)
 
     if not signals:
-        print("No signals generated in recent window.")
+        logger.info("No signals generated in recent window.")
         return
 
     # Only send signals for the latest bar
@@ -64,14 +66,14 @@ def main() -> None:
     latest_signals = [s for s in signals if s.timestamp == last_ts]
 
     if not latest_signals:
-        print("Signals exist, but none on the latest bar.")
+        logger.info("Signals exist, but none on the latest bar.")
         return
 
     transport = TelegramTransport()
     for sig in latest_signals:
         payload = sig.to_dict()
         transport.send(payload)
-        print("Dispatched signal:", payload)
+        logger.info(f"Dispatched signal: {payload}")
 
 
 if __name__ == "__main__":

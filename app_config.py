@@ -24,6 +24,11 @@ class LoggingConfig(BaseModel):
         default=None, description="Log file path (when dest='file')"
     )
 
+    # Log rotation configuration
+    max_file_size: int = Field(default=10*1024*1024, description="Maximum log file size in bytes (10MB default)")
+    backup_count: int = Field(default=5, description="Number of backup files to keep")
+    rotate_on_startup: bool = Field(default=True, description="Rotate log file on application startup")
+
 
 class OrchestratorConfig(BaseModel):
     """Configuration for the main orchestrator."""

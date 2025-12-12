@@ -11,7 +11,7 @@ from api_gateway.ig_client.master_client import IGClient
 from settings import secrets
 from common.logging import setup_logging  # noqa: E402
 from config import load_config  # noqa: E402
-from api_gateway.ig_client.core.logging_config import error_tracker
+# TODO: Implement error tracking functionality
 from api_gateway.ig_client.core import (
     IGAuthenticationError,
     IGValidationError,
@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 
 def handle_api_error(error: Exception, operation: str):
     """Centralized error handling for API operations"""
-    error_tracker.track_error(error, {"operation": operation})
+    # TODO: Implement error tracking functionality
+    logger.warning(f"API error in {operation}: {error}")
 
     if isinstance(error, IGAuthenticationError):
         logger.error(f"Authentication failed for {operation}: {error}")
@@ -180,14 +181,8 @@ def main():
 
         # Print error summary
         print("\n=== Error Summary ===")
-        error_summary = error_tracker.get_error_summary()
-        print(f"Total errors encountered: {error_summary['total_errors']}")
-        if error_summary["error_counts"]:
-            print("Error breakdown:")
-            for error_type, count in error_summary["error_counts"].items():
-                print(f"  {error_type}: {count}")
-        else:
-            print("No errors encountered!")
+        # TODO: Implement error summary functionality
+        print("Error tracking not yet implemented.")
 
     except Exception as e:
         logger.critical(f"Critical error in main: {e}", exc_info=True)

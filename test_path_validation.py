@@ -5,7 +5,7 @@ Test script to demonstrate centralized path parameter validation.
 import logging
 from api_gateway.ig_client.master_client import IGClient
 from settings import secrets
-from api_gateway.ig_client.core.logging_config import setup_logging
+from common.logging import setup_logging
 from api_gateway.ig_client.core import IGValidationError
 
 # Setup logging

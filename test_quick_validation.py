@@ -6,7 +6,7 @@ Tests basic functionality without creating/modifying data.
 import logging
 from api_gateway.ig_client.master_client import IGClient
 from settings import secrets
-from api_gateway.ig_client.core.logging_config import setup_logging
+from common.logging import setup_logging
 
 # Setup logging
 setup_logging(level="WARNING")  # Less verbose for quick tests

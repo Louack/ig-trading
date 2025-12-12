@@ -69,6 +69,8 @@ class MassiveRest:
         Returns:
             Function result
         """
+        logger.debug(f"API call: {func.__name__}", extra={"args_count": len(args), "kwargs_keys": list(kwargs.keys())})
+
         # Apply rate limiting
         if self.rate_limiter:
             self.rate_limiter.acquire()

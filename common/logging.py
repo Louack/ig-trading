@@ -8,6 +8,7 @@ import json
 import logging
 import sys
 from logging import Handler, Formatter
+from logging.handlers import RotatingFileHandler
 from typing import Optional, List
 
 # Configuration will be loaded dynamically to avoid import cycles
@@ -57,13 +58,17 @@ class JsonFormatter(Formatter):
 
 
 def _build_handlers(
-    dest: str, fmt: Formatter, filename: Optional[str]
+    dest: str, fmt: Formatter, filename: Optional[str],
+    max_file_size: int = 10*1024*1024, backup_count: int = 5
 ) -> List[Handler]:
     handlers: List[Handler] = []
     if dest in ("stdout", "both"):
         handlers.append(logging.StreamHandler(sys.stdout))
     if dest in ("file", "both") and filename:
-        handlers.append(logging.FileHandler(filename))
+        # Use RotatingFileHandler for log rotation
+        handlers.append(RotatingFileHandler(
+            filename, maxBytes=max_file_size, backupCount=backup_count
+        ))
     return handlers
 
 
@@ -72,6 +77,8 @@ def setup_logging(
     fmt: Optional[str] = None,
     dest: Optional[str] = None,
     filename: Optional[str] = None,
+    max_file_size: Optional[int] = None,
+    backup_count: Optional[int] = None,
 ) -> None:
     """
     Configure root logging once.
@@ -81,9 +88,12 @@ def setup_logging(
         fmt: "plain" or "json" (default from config or plain)
         dest: "stdout", "file", or "both" (default from config or stdout)
         filename: path for file handler when dest includes file (default from config)
+        max_file_size: maximum log file size in bytes (default from config or 10MB)
+        backup_count: number of backup files to keep (default from config or 5)
     """
     # Load defaults from config if not provided
-    if level is None or fmt is None or dest is None or filename is None:
+    if (level is None or fmt is None or dest is None or filename is None or
+        max_file_size is None or backup_count is None):
         try:
             # Import here to avoid circular imports
             from app_config import AppConfig
@@ -93,12 +103,16 @@ def setup_logging(
             fmt = fmt or config.logging.format
             dest = dest or config.logging.dest
             filename = filename or config.logging.file
+            max_file_size = max_file_size or config.logging.max_file_size
+            backup_count = backup_count or config.logging.backup_count
         except ImportError:
             # Fallback if config not available
             level = level or "INFO"
             fmt = fmt or "plain"
             dest = dest or "stdout"
             filename = filename or None
+            max_file_size = max_file_size or 10*1024*1024
+            backup_count = backup_count or 5
 
     level = level.upper()
     fmt = fmt.lower()
@@ -116,7 +130,7 @@ def setup_logging(
             "%(asctime)s %(levelname)s %(name)s - %(message)s"
         )
 
-    handlers = _build_handlers(dest, formatter, filename)
+    handlers = _build_handlers(dest, formatter, filename, max_file_size, backup_count)
     if not handlers:
         handlers = [logging.StreamHandler(sys.stdout)]
     for h in handlers:

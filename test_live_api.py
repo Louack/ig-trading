@@ -1,6 +1,6 @@
 import logging
 
-from api_gateway.ig_client.core.logging_config import setup_logging
+from common.logging import setup_logging
 from api_gateway.ig_client.master_client import IGClient
 from api_gateway.ig_client.utils import create_position_and_wait_for_confirmation
 from api_gateway.ig_client.utils.deal_helpers import (
