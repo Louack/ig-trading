@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 from api_gateway.ig_client.master_client import IGClient
-from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
+from settings import secrets
 from ..interfaces.data_source import DataSource
 from ..interfaces.market_data import MarketData, MarketDataPoint, PriceData
 from common.resilience import (
@@ -57,14 +57,22 @@ class IGDataSource(DataSource):
 
         # Use injected values or fall back to config/settings
         self.base_url = (
-            base_url or config.get("base_url") or BASE_URLS[self.account_type]
+            base_url
+            or config.get("base_url")
+            or secrets.ig_base_urls[self.account_type]
         )
-        self.api_key = api_key or config.get("api_key") or API_KEYS[self.account_type]
+        self.api_key = (
+            api_key or config.get("api_key") or secrets.ig_api_keys[self.account_type]
+        )
         self.identifier = (
-            identifier or config.get("identifier") or IDENTIFIERS[self.account_type]
+            identifier
+            or config.get("identifier")
+            or secrets.ig_identifiers[self.account_type]
         )
         self.password = (
-            password or config.get("password") or PASSWORDS[self.account_type]
+            password
+            or config.get("password")
+            or secrets.ig_passwords[self.account_type]
         )
 
         # IG client (will be created in connect() if not provided)

@@ -5,7 +5,7 @@ Tests basic functionality without creating/modifying data.
 
 import logging
 from api_gateway.ig_client.master_client import IGClient
-from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
+from settings import secrets
 from api_gateway.ig_client.core.logging_config import setup_logging
 
 # Setup logging
@@ -23,10 +23,10 @@ def quick_validation_test():
     try:
         account_type = "demo"
         client = IGClient(
-            base_url=BASE_URLS[account_type],
-            api_key=API_KEYS[account_type],
-            identifier=IDENTIFIERS[account_type],
-            password=PASSWORDS[account_type],
+            base_url=secrets.ig_base_urls[account_type],
+            api_key=secrets.ig_api_keys[account_type],
+            identifier=secrets.ig_identifiers[account_type],
+            password=secrets.ig_passwords[account_type],
         )
         print("✅ Client initialized")
     except Exception as e:
@@ -90,10 +90,10 @@ def validation_error_test():
     try:
         account_type = "demo"
         client = IGClient(
-            base_url=BASE_URLS[account_type],
-            api_key=API_KEYS[account_type],
-            identifier=IDENTIFIERS[account_type],
-            password=PASSWORDS[account_type],
+            base_url=secrets.ig_base_urls[account_type],
+            api_key=secrets.ig_api_keys[account_type],
+            identifier=secrets.ig_identifiers[account_type],
+            password=secrets.ig_passwords[account_type],
         )
 
         # Test validation errors

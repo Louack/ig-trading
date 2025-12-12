@@ -5,8 +5,11 @@ Main script for the data collection service
 
 import sys
 import os
-from common.logging import setup_logging  # noqa: E402
 from datetime import datetime
+import logging
+
+from common.logging import setup_logging  # noqa: E402
+from config import load_config_with_secrets  # noqa: E402
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -20,46 +23,20 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Main function to demonstrate data collection"""
-    setup_logging()
+    config, secrets = load_config_with_secrets()
+    setup_logging(
+        level=config.logging.level,
+        fmt=config.logging.format,
+        dest=config.logging.dest,
+        filename=config.logging.file,
+    )
 
-    config = {
-        "data_sources": {
-            "ig_demo": {
-                "type": "ig",
-                "name": "IG Demo Account",
-                "account_type": "demo",
-                "timeout": 30,
-                "max_retries": 3,
-                "circuit_breaker_threshold": 5,
-                "circuit_breaker_timeout": 60,
-                "rate_limit_calls": 40,
-                "rate_limit_period": 60,
-            },
-            # 'massive_backup': {
-            #     'type': 'massive',
-            #     'name': 'Massive',
-            #     'api_key': MASSIVE_API_KEY,  # from settings
-            #     'tier': 'free',
-            #     'timeout': 30,
-            #     'max_retries': 3,
-            #     'circuit_breaker_threshold': 10,
-            #     'circuit_breaker_timeout': 60
-            # }
-        },
-        "storage": {
-            "base_dir": "data",
-            "format": "csv",
-            "enable_checksums": True,
-            "atomic_writes": True,
-        },
-        "enable_health_checks": True,
-        "health_check_interval": 300,
-    }
+    data_collection_config = config.data_collection
 
     try:
         # Validate configuration
         logger.info("Validating configuration...")
-        validated_config = validate_config(config)
+        validated_config = validate_config(data_collection_config.to_dict())
         logger.info("Configuration validated successfully")
 
         # Initialize data collector

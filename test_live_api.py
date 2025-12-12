@@ -6,7 +6,7 @@ from api_gateway.ig_client.utils import create_position_and_wait_for_confirmatio
 from api_gateway.ig_client.utils.deal_helpers import (
     close_position_and_wait_for_confirmation,
 )
-from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
+from settings import secrets
 
 setup_logging(level="INFO")
 logger = logging.getLogger(__name__)
@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     account_type = "demo"
     client = IGClient(
-        base_url=BASE_URLS[account_type],
-        api_key=API_KEYS[account_type],
-        identifier=IDENTIFIERS[account_type],
-        password=PASSWORDS[account_type],
+        base_url=secrets.ig_base_urls[account_type],
+        api_key=secrets.ig_api_keys[account_type],
+        identifier=secrets.ig_identifiers[account_type],
+        password=secrets.ig_passwords[account_type],
     )
 
     logger.info("IG Client initialized successfully")

@@ -20,8 +20,8 @@ from signal_dispatch.router import dispatch_signals, DispatchConfig  # noqa: E40
 from signal_dispatch.transports import TelegramTransport, ConsoleTransport  # noqa: E402
 from strategies.implementations.golden_death_cross import GoldenDeathCrossStrategy  # noqa: E402
 from data_collection.data_collector import DataCollector  # noqa: E402
-from data_collection.factory.data_source_factory import DataSourceFactory  # noqa: E402
 from data_collection.config_validation import validate_config  # noqa: E402
+from config import load_config_with_secrets  # noqa: E402
 import logging
 
 
@@ -53,67 +53,61 @@ def run_strategies(df: pd.DataFrame, strategy_cfgs: List[Dict[str, Any]]):
 
 
 def main():
-    setup_logging()
+    config, secrets = load_config_with_secrets()
+    setup_logging(
+        level=config.logging.level,
+        fmt=config.logging.format,
+        dest=config.logging.dest,
+        filename=config.logging.file,
+    )
     logger = logging.getLogger(__name__)
 
     # --- Configuration ---
-    as_of = None  # e.g., pd.Timestamp("2025-05-13") for replay; None = full range
-    timeframe = "1D"
-    symbol = "NDX"
-    data_path = (
-        PROJECT_ROOT / "data_collection" / "data" / timeframe / "NDX_YFinance.csv"
-    )
-    instrument_type = "INDEX"
-    source = "YFinance"
+    as_of_raw = config.orchestrator.as_of
+    as_of = pd.Timestamp(as_of_raw) if as_of_raw else None
+    timeframe = config.orchestrator.timeframe
+    symbol = config.orchestrator.symbol
+    data_path = Path(config.orchestrator.data_path)
+    instrument_type = config.orchestrator.instrument_type
+    source = config.orchestrator.source
 
-    strategy_cfgs = [
-        {
-            "name": "golden_death_cross_20_50",
-            "class": GoldenDeathCrossStrategy,
-            "params": {
-                "name": "golden_death_cross_20_50",
-                "timeframe": "1D",
-                "short_ma_period": 20,
-                "long_ma_period": 50,
-                "confirmation_periods": 2,
-                "volume_filter": False,
-                "volume_sma_period": 20,
-                "rsi_filter": False,
-                "rsi_period": 14,
-                "rsi_oversold": 30,
-                "rsi_overbought": 70,
-            },
-            # window: warm-up + cushion
-            "window": max(50, 20, 2) + 5,
-            "latest_only": True,
-        }
-    ]
+    strategy_cfgs = []
+    for scfg in config.strategies:
+        # Dynamic import of strategy class
+        module_name, class_name = scfg.class_name.rsplit(".", 1)
+        module = __import__(module_name, fromlist=[class_name])
+        strategy_class = getattr(module, class_name)
+
+        strategy_cfgs.append(
+            {
+                "name": scfg.name,
+                "class": strategy_class,
+                "params": scfg.params,
+                "window": scfg.window,
+                "latest_only": scfg.latest_only,
+            }
+        )
 
     dispatch_cfg = DispatchConfig(
-        min_strength=None,  # e.g., "MEDIUM"
-        allowed_instruments=None,
-        allowed_strategies=None,
-        dedupe=True,
+        min_strength=config.dispatch.min_strength,
+        allowed_instruments=config.dispatch.allowed_instruments,
+        allowed_strategies=config.dispatch.allowed_strategies,
+        dedupe=config.dispatch.dedupe,
     )
-    transports = [TelegramTransport(), ConsoleTransport()]
+    transports = []
+    for t in config.dispatch.transports:
+        if t == "telegram":
+            transports.append(TelegramTransport())
+        elif t == "console":
+            transports.append(ConsoleTransport())
 
     # --- Fetch latest data before loading ---
-    # Minimal data collector config for YFinance (extend as needed)
-    collector_config = {
-        "data_sources": {
-            "yfinance": {"type": "yfinance", "name": "YFinance"},
-        },
-        "storage": {
-            "base_dir": str(PROJECT_ROOT / "data_collection" / "data"),
-            "format": "csv",
-            "enable_checksums": True,
-            "atomic_writes": True,
-        },
-        "enable_health_checks": False,
-    }
-
+    collector_config = config.data_collection.to_dict()
     validated_cfg = validate_config(collector_config)
-    collector = DataCollector(validated_cfg.data_sources)
+    collector = DataCollector(
+        validated_cfg.data_sources,
+        enable_health_monitoring=validated_cfg.enable_health_checks,
+    )
 
     updated = collector.collect_and_store(symbol, timeframe)
     if not updated:

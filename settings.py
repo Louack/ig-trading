@@ -1,62 +1,79 @@
 """
-Settings and environment variable configuration.
+Environment-based secrets management.
 
-This module serves as the single source of truth for all environment variables
-used across the application. All environment variable access should go through
-this module rather than using os.getenv() directly.
+This module handles sensitive configuration (API keys, tokens, credentials)
+loaded from environment variables. Use app_config.py for application settings.
 """
 
 import os
-
-from dotenv import load_dotenv
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file if present
 env_path = Path(os.getenv("ENV_PATH", "/etc/dev/ig_trading/.env"))
 load_dotenv(dotenv_path=env_path)
 
-# IG Markets API credentials
-IG_DEMO_API_KEY = os.getenv("IG_DEMO_API_KEY", default="default")
-IG_DEMO_IDENTIFIER = os.getenv("IG_DEMO_IDENTIFIER", default="default")
-IG_DEMO_PASSWORD = os.getenv("IG_DEMO_PASSWORD", default="default")
 
-IG_PROD_API_KEY = os.getenv("IG_PROD_API_KEY", default="default")
-IG_PROD_IDENTIFIER = os.getenv("IG_PROD_IDENTIFIER", default="default")
-IG_PROD_PASSWORD = os.getenv("IG_PROD_PASSWORD", default="default")
+class Secrets:
+    """Container for all sensitive configuration values."""
 
-# Massive (formerly Polygon.io) API credentials
-MASSIVE_API_KEY = os.getenv(
-    "MASSIVE_API_KEY", default=os.getenv("POLYGON_API_KEY", default="")
-)
-# Legacy support for POLYGON_API_KEY (will be removed in future)
-POLYGON_API_KEY = os.getenv("POLYGON_API_KEY", default=MASSIVE_API_KEY)
+    # IG Markets API credentials
+    ig_demo_api_key: str = os.getenv("IG_DEMO_API_KEY", "")
+    ig_demo_identifier: str = os.getenv("IG_DEMO_IDENTIFIER", "")
+    ig_demo_password: str = os.getenv("IG_DEMO_PASSWORD", "")
 
-# IG Markets API configuration
-BASE_URLS = {
-    "demo": "https://demo-api.ig.com/gateway/deal",
-    "prod": "https://api.ig.com/gateway/deal",
-}
+    ig_prod_api_key: str = os.getenv("IG_PROD_API_KEY", "")
+    ig_prod_identifier: str = os.getenv("IG_PROD_IDENTIFIER", "")
+    ig_prod_password: str = os.getenv("IG_PROD_PASSWORD", "")
 
-API_KEYS = {
-    "demo": IG_DEMO_API_KEY,
-    "prod": IG_PROD_API_KEY,
-}
+    # Massive (formerly Polygon.io) API credentials
+    massive_api_key: str = os.getenv("MASSIVE_API_KEY", "")
 
-IDENTIFIERS = {
-    "demo": IG_DEMO_IDENTIFIER,
-    "prod": IG_PROD_IDENTIFIER,
-}
+    # Telegram bot configuration
+    telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "test_token_placeholder")
+    telegram_chat_id: str = os.getenv("TELEGRAM_CHAT_ID", "test_chat_placeholder")
 
-PASSWORDS = {
-    "demo": IG_DEMO_PASSWORD,
-    "prod": IG_PROD_PASSWORD,
-}
+    # Legacy support for POLYGON_API_KEY (will be removed in future)
+    @property
+    def polygon_api_key(self) -> str:
+        """Legacy Polygon API key support."""
+        return os.getenv("POLYGON_API_KEY", self.massive_api_key)
 
-# Telegram bot configuration (alert transport)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", default="")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", default="")
+    # IG Markets API configuration (derived from secrets)
+    @property
+    def ig_base_urls(self) -> dict:
+        """IG API base URLs."""
+        return {
+            "demo": "https://demo-api.ig.com/gateway/deal",
+            "prod": "https://api.ig.com/gateway/deal",
+        }
 
-# Logging configuration defaults
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-LOG_FORMAT = os.getenv("LOG_FORMAT", "plain")
-LOG_DEST = os.getenv("LOG_DEST", "stdout")
-LOG_FILE = os.getenv("LOG_FILE", "")
+    @property
+    def ig_api_keys(self) -> dict:
+        """IG API keys by account type."""
+        return {
+            "demo": self.ig_demo_api_key,
+            "prod": self.ig_prod_api_key,
+        }
+
+    @property
+    def ig_identifiers(self) -> dict:
+        """IG identifiers by account type."""
+        return {
+            "demo": self.ig_demo_identifier,
+            "prod": self.ig_prod_identifier,
+        }
+
+    @property
+    def ig_passwords(self) -> dict:
+        """IG passwords by account type."""
+        return {
+            "demo": self.ig_demo_password,
+            "prod": self.ig_prod_password,
+        }
+
+
+# Global secrets instance
+secrets = Secrets()

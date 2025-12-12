@@ -8,7 +8,7 @@ from data_collection.data_collector import DataCollector
 from data_collection.config_validation import validate_config
 from common.alerting import alerting_service
 from data_collection.storage import CSVStorage
-from settings import MASSIVE_API_KEY
+from settings import secrets
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def example_massive_basic():
             "massive": {
                 "type": "massive",
                 "name": "Massive",
-                "api_key": MASSIVE_API_KEY,
+                "api_key": secrets.massive_api_key,
                 "tier": "free",
             }
         },

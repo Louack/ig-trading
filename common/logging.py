@@ -10,7 +10,7 @@ import sys
 from logging import Handler, Formatter
 from typing import Optional, List
 
-from settings import LOG_LEVEL, LOG_FORMAT, LOG_DEST, LOG_FILE  # noqa: F401
+# Configuration will be loaded dynamically to avoid import cycles
 
 
 class JsonFormatter(Formatter):
@@ -77,15 +77,32 @@ def setup_logging(
     Configure root logging once.
 
     Args:
-        level: log level name (default from LOG_LEVEL or INFO)
-        fmt: "plain" or "json" (default from LOG_FORMAT or plain)
-        dest: "stdout", "file", or "both" (default from LOG_DEST or stdout)
-        filename: path for file handler when dest includes file (default LOG_FILE)
+        level: log level name (default from config or INFO)
+        fmt: "plain" or "json" (default from config or plain)
+        dest: "stdout", "file", or "both" (default from config or stdout)
+        filename: path for file handler when dest includes file (default from config)
     """
-    level = (level or LOG_LEVEL or "INFO").upper()
-    fmt = (fmt or LOG_FORMAT or "plain").lower()
-    dest = (dest or LOG_DEST or "stdout").lower()
-    filename = filename or LOG_FILE or None
+    # Load defaults from config if not provided
+    if level is None or fmt is None or dest is None or filename is None:
+        try:
+            # Import here to avoid circular imports
+            from app_config import AppConfig
+
+            config = AppConfig.from_env()
+            level = level or config.logging.level
+            fmt = fmt or config.logging.format
+            dest = dest or config.logging.dest
+            filename = filename or config.logging.file
+        except ImportError:
+            # Fallback if config not available
+            level = level or "INFO"
+            fmt = fmt or "plain"
+            dest = dest or "stdout"
+            filename = filename or None
+
+    level = level.upper()
+    fmt = fmt.lower()
+    dest = dest.lower()
 
     # Avoid duplicate handlers on repeated calls
     root = logging.getLogger()

@@ -8,8 +8,9 @@ from api_gateway.ig_client.utils import create_position_and_wait_for_confirmatio
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from api_gateway.ig_client.master_client import IGClient
-from settings import BASE_URLS, API_KEYS, IDENTIFIERS, PASSWORDS
+from settings import secrets
 from common.logging import setup_logging  # noqa: E402
+from config import load_config  # noqa: E402
 from api_gateway.ig_client.core.logging_config import error_tracker
 from api_gateway.ig_client.core import (
     IGAuthenticationError,
@@ -73,15 +74,21 @@ def handle_api_error(error: Exception, operation: str):
 
 def main():
     """Main function with comprehensive error handling"""
-    setup_logging()
+    cfg = load_config()
+    setup_logging(
+        level=cfg["logging"]["level"],
+        fmt=cfg["logging"]["format"],
+        dest=cfg["logging"]["dest"],
+        filename=cfg["logging"].get("file") or None,
+    )
     try:
         # Initialize client
-        account_type = "demo"
+        account_type = cfg.get("api", {}).get("account_type", "demo")
         client = IGClient(
-            base_url=BASE_URLS[account_type],
-            api_key=API_KEYS[account_type],
-            identifier=IDENTIFIERS[account_type],
-            password=PASSWORDS[account_type],
+            base_url=secrets.ig_base_urls[account_type],
+            api_key=secrets.ig_api_keys[account_type],
+            identifier=secrets.ig_identifiers[account_type],
+            password=secrets.ig_passwords[account_type],
         )
 
         logger.info("IG Client initialized successfully")
@@ -190,10 +197,10 @@ def main():
 if __name__ == "__main__":
     account_type = "demo"
     client = IGClient(
-        base_url=BASE_URLS[account_type],
-        api_key=API_KEYS[account_type],
-        identifier=IDENTIFIERS[account_type],
-        password=PASSWORDS[account_type],
+        base_url=secrets.ig_base_urls[account_type],
+        api_key=secrets.ig_api_keys[account_type],
+        identifier=secrets.ig_identifiers[account_type],
+        password=secrets.ig_passwords[account_type],
     )
 
     logger.info("IG Client initialized successfully")
