@@ -31,10 +31,29 @@ def main():
         filename=secrets.log_file,
     )
 
+    # Convert TradingConfig to dict format expected by validate_config
+    # CollectorConfig expects data_sources as Dict[name, config_dict]
+    # Need to merge TOML config with secrets (API keys, etc.)
+    data_sources_dict = {}
+
+    for ds in config.data_sources:
+        ds_dict = ds.dict()
+
+        # Add required fields from secrets based on data source type
+        if ds.type == "ig":
+            # IG needs account_type (demo/prod)
+            ds_dict["account_type"] = "demo"  # Default to demo, can be overridden
+        elif ds.type == "massive":
+            # Massive needs api_key
+            ds_dict["api_key"] = secrets.massive_api_key
+        # YFinance doesn't need additional fields
+
+        data_sources_dict[ds.name] = ds_dict
+
     data_collection_config = {
-        "data_sources": config.get("data_sources", {}),
-        "storage": config.get("storage", {}),
-        "enable_health_checks": config.get("enable_health_checks", False),
+        "data_sources": data_sources_dict,
+        "storage": {},  # Not in TOML, keep empty for now
+        "enable_health_checks": True,  # Default enabled
     }
 
     try:
