@@ -1,36 +1,32 @@
 """
-Simple configuration factory.
+Simple TOML configuration loading.
 
-This replaces the complex config/loader.py with a clean factory
-that uses the unified AppConfig system.
+Loads TOML files containing non-sensitive configuration values.
 """
 
-from typing import Tuple
-from app_config import AppConfig
-from settings import secrets, Secrets
+import logging
+from typing import Dict, Any
+import tomllib
+from settings import trading_toml_path
+
+logger = logging.getLogger(__name__)
 
 
-def load_config() -> AppConfig:
+def load_config() -> Dict[str, Any]:
     """
-    Load application configuration from environment variables.
+    Load configuration from TOML file.
 
     Returns:
-        AppConfig: Validated application configuration
+        Dict containing configuration
+
+    Raises:
+        FileNotFoundError: If config file not found
+        ValueError: If config file is invalid
     """
-    return AppConfig.from_env()
+    if not trading_toml_path.exists():
+        raise FileNotFoundError(f"Config file not found: {trading_toml_path}")
 
+    with open(trading_toml_path, "rb") as f:
+        config = tomllib.load(f)
 
-def load_config_with_secrets() -> Tuple[AppConfig, Secrets]:
-    """
-    Load both application configuration and secrets.
-
-    Returns:
-        Tuple of (AppConfig, Secrets): Configuration and secrets
-    """
-    return load_config(), secrets
-
-
-# Backward compatibility aliases
-def load_config_from_env() -> AppConfig:
-    """Legacy alias for load_config."""
-    return load_config()
+    return config

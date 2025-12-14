@@ -81,7 +81,7 @@ class IGRest:
                 "endpoint": endpoint,
                 "version": version,
                 "has_auth": bool(headers.get("Authorization")),
-            }
+            },
         )
 
         try:

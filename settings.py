@@ -13,11 +13,14 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file if present
 env_path = Path(os.getenv("ENV_PATH", "/etc/dev/ig_trading/.env"))
+trading_toml_path = Path(
+    os.getenv("TRADING_TOML_PATH", "/etc/dev/ig_trading/trading.toml")
+)
 load_dotenv(dotenv_path=env_path)
 
 
 class Secrets:
-    """Container for all sensitive configuration values."""
+    """Container for all sensitive configuration values and environment variables."""
 
     # IG Markets API credentials
     ig_demo_api_key: str = os.getenv("IG_DEMO_API_KEY", "")
@@ -34,6 +37,12 @@ class Secrets:
     # Telegram bot configuration
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "test_token_placeholder")
     telegram_chat_id: str = os.getenv("TELEGRAM_CHAT_ID", "test_chat_placeholder")
+
+    # Logging configuration
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    log_format: str = os.getenv("LOG_FORMAT", "plain")
+    log_dest: str = os.getenv("LOG_DEST", "stdout")
+    log_file: str = os.getenv("LOG_FILE", "")
 
     # Legacy support for POLYGON_API_KEY (will be removed in future)
     @property

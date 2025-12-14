@@ -10,8 +10,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from api_gateway.ig_client.master_client import IGClient
 from settings import secrets
 from common.logging import setup_logging  # noqa: E402
-from config import load_config  # noqa: E402
-# TODO: Implement error tracking functionality
 from api_gateway.ig_client.core import (
     IGAuthenticationError,
     IGValidationError,
@@ -75,16 +73,14 @@ def handle_api_error(error: Exception, operation: str):
 
 def main():
     """Main function with comprehensive error handling"""
-    cfg = load_config()
     setup_logging(
-        level=cfg["logging"]["level"],
-        fmt=cfg["logging"]["format"],
-        dest=cfg["logging"]["dest"],
-        filename=cfg["logging"].get("file") or None,
+        level=secrets.log_level,
+        fmt=secrets.log_format,
+        dest=secrets.log_dest,
+        filename=secrets.log_file,
     )
     try:
         # Initialize client
-        account_type = cfg.get("api", {}).get("account_type", "demo")
         client = IGClient(
             base_url=secrets.ig_base_urls[account_type],
             api_key=secrets.ig_api_keys[account_type],

@@ -14,3 +14,7 @@ venv.bak/
 
 .ipynb_checkpoints/
 *.ipynb_checkpoints
+
+# User-specific configuration files (outside project directory)
+trading.toml
+**/trading.toml

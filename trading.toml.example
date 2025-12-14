@@ -1,0 +1,119 @@
+# =============================================================================
+# TRADING INSTRUMENTS CONFIGURATION
+# Highly configurable system for instruments, strategies, and timeframes
+# =============================================================================
+
+# Define available strategies (reusable across instruments)
+[[strategies]]
+name = "strategy_1"
+class_name = "strategies.implementations.golden_death_cross.GoldenDeathCrossStrategy"
+description = "First trading strategy (mono-timeframe)"
+enabled = true
+
+# Default strategy parameters
+[strategies.parameters]
+fast_period = 12
+slow_period = 26
+rsi_period = 14
+
+[[strategies]]
+name = "strategy_2"
+class_name = "strategies.implementations.golden_death_cross.GoldenDeathCrossStrategy"
+description = "Second trading strategy (mono-timeframe)"
+enabled = true
+
+[strategies.parameters]
+threshold = 0.8
+lookback_periods = 20
+
+# Define data sources
+[[data_sources]]
+name = "yfinance"
+type = "yfinance"
+description = "Yahoo Finance API"
+enabled = true
+timeout = 30
+max_retries = 3
+
+[[data_sources]]
+name = "massive"
+type = "massive"
+description = "Massive/Polygon API"
+enabled = true
+api_key = "${MASSIVE_API_KEY}"
+timeout = 15
+
+[[data_sources]]
+name = "ig"
+type = "ig"
+description = "IG Markets API"
+enabled = true
+account_type = "demo"
+timeout = 30
+
+# Define instruments with their strategy-timeframe combinations
+[[instruments]]
+symbol = "NDX"
+name = "NASDAQ 100"
+description = "Technology sector index"
+enabled = true
+
+# Data sources for this instrument (multiple sources for fallback)
+data_sources = ["yfinance", "massive"]
+
+# Strategy-timeframe mappings
+[[instruments.strategy_mappings]]
+strategy = "strategy_1"
+timeframes = ["1H", "1D"]
+enabled = true
+
+# Per-strategy-timeframe parameter overrides (optional)
+[instruments.strategy_mappings.parameters."1H"]
+fast_period = 8   # Shorter period for hourly timeframe
+slow_period = 21  # Adjusted for hourly
+
+[instruments.strategy_mappings.parameters."1D"]
+fast_period = 20  # Longer period for daily timeframe
+slow_period = 50  # Standard daily moving averages
+
+[[instruments]]
+symbol = "IX.D.SP500.IFE.IP"
+name = "S&P 500"
+description = "Broad market index"
+enabled = true
+
+# Data sources for this instrument
+data_sources = ["ig"]
+
+# Multiple strategy mappings for this instrument
+[[instruments.strategy_mappings]]
+strategy = "strategy_1"
+timeframes = ["1H", "1D"]
+enabled = true
+
+# Default parameters for strategy_1 on US500
+[instruments.strategy_mappings.parameters."1H"]
+fast_period = 9
+slow_period = 21
+
+[instruments.strategy_mappings.parameters."1D"]
+fast_period = 21
+slow_period = 55
+
+[[instruments.strategy_mappings]]
+strategy = "strategy_2"
+timeframes = ["4H", "1D", "1W"]
+enabled = true
+
+# Strategy 2 parameters for different timeframes
+[instruments.strategy_mappings.parameters."4H"]
+threshold = 0.75
+lookback_periods = 15
+
+[instruments.strategy_mappings.parameters."1D"]
+threshold = 0.8
+lookback_periods = 20
+
+[instruments.strategy_mappings.parameters."1W"]
+threshold = 0.9   # Higher threshold for weekly timeframe
+lookback_periods = 12

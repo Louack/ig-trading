@@ -9,13 +9,13 @@ from datetime import datetime
 import logging
 
 from common.logging import setup_logging  # noqa: E402
-from config import load_config_with_secrets  # noqa: E402
+from config import load_config  # noqa: E402
+from settings import secrets  # noqa: E402
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from data_collection.data_collector import DataCollector
-from data_collection.factory.data_source_factory import DataSourceFactory
 from data_collection.config_validation import validate_config
 
 logger = logging.getLogger(__name__)
@@ -23,20 +23,24 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Main function to demonstrate data collection"""
-    config, secrets = load_config_with_secrets()
+    config = load_config()
     setup_logging(
-        level=config.logging.level,
-        fmt=config.logging.format,
-        dest=config.logging.dest,
-        filename=config.logging.file,
+        level=secrets.log_level,
+        fmt=secrets.log_format,
+        dest=secrets.log_dest,
+        filename=secrets.log_file,
     )
 
-    data_collection_config = config.data_collection
+    data_collection_config = {
+        "data_sources": config.get("data_sources", {}),
+        "storage": config.get("storage", {}),
+        "enable_health_checks": config.get("enable_health_checks", False),
+    }
 
     try:
         # Validate configuration
         logger.info("Validating configuration...")
-        validated_config = validate_config(data_collection_config.to_dict())
+        validated_config = validate_config(data_collection_config)
         logger.info("Configuration validated successfully")
 
         # Initialize data collector

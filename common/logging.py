@@ -58,17 +58,22 @@ class JsonFormatter(Formatter):
 
 
 def _build_handlers(
-    dest: str, fmt: Formatter, filename: Optional[str],
-    max_file_size: int = 10*1024*1024, backup_count: int = 5
+    dest: str,
+    fmt: Formatter,
+    filename: Optional[str],
+    max_file_size: int = 10 * 1024 * 1024,
+    backup_count: int = 5,
 ) -> List[Handler]:
     handlers: List[Handler] = []
     if dest in ("stdout", "both"):
         handlers.append(logging.StreamHandler(sys.stdout))
     if dest in ("file", "both") and filename:
         # Use RotatingFileHandler for log rotation
-        handlers.append(RotatingFileHandler(
-            filename, maxBytes=max_file_size, backupCount=backup_count
-        ))
+        handlers.append(
+            RotatingFileHandler(
+                filename, maxBytes=max_file_size, backupCount=backup_count
+            )
+        )
     return handlers
 
 
@@ -92,26 +97,32 @@ def setup_logging(
         backup_count: number of backup files to keep (default from config or 5)
     """
     # Load defaults from config if not provided
-    if (level is None or fmt is None or dest is None or filename is None or
-        max_file_size is None or backup_count is None):
+    if (
+        level is None
+        or fmt is None
+        or dest is None
+        or filename is None
+        or max_file_size is None
+        or backup_count is None
+    ):
         try:
             # Import here to avoid circular imports
-            from app_config import AppConfig
+            from settings import secrets
 
-            config = AppConfig.from_env()
-            level = level or config.logging.level
-            fmt = fmt or config.logging.format
-            dest = dest or config.logging.dest
-            filename = filename or config.logging.file
-            max_file_size = max_file_size or config.logging.max_file_size
-            backup_count = backup_count or config.logging.backup_count
+            level = level or secrets.log_level
+            fmt = fmt or secrets.log_format
+            dest = dest or secrets.log_dest
+            filename = filename or secrets.log_file
+            # Use defaults for max_file_size and backup_count since they're not in secrets
+            max_file_size = max_file_size or 10 * 1024 * 1024  # 10MB
+            backup_count = backup_count or 5
         except ImportError:
             # Fallback if config not available
             level = level or "INFO"
             fmt = fmt or "plain"
             dest = dest or "stdout"
             filename = filename or None
-            max_file_size = max_file_size or 10*1024*1024
+            max_file_size = max_file_size or 10 * 1024 * 1024
             backup_count = backup_count or 5
 
     level = level.upper()
