@@ -57,11 +57,19 @@ def get_available_strategies() -> Dict[str, str]:
         Dictionary mapping strategy str_name to class name
     """
     from strategies.implementations.golden_death_cross import GoldenDeathCrossStrategy
+    from strategies.implementations.dummy_strategy_1 import DummyStrategy1
+    from strategies.implementations.dummy_strategy_2 import DummyStrategy2
 
     return {
         GoldenDeathCrossStrategy.str_name: GoldenDeathCrossStrategy.__module__
         + "."
-        + GoldenDeathCrossStrategy.__name__
+        + GoldenDeathCrossStrategy.__name__,
+        DummyStrategy1.str_name: DummyStrategy1.__module__
+        + "."
+        + DummyStrategy1.__name__,
+        DummyStrategy2.str_name: DummyStrategy2.__module__
+        + "."
+        + DummyStrategy2.__name__,
     }
 
 

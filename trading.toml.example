@@ -9,13 +9,16 @@ data_sources = ["yfinance"]
 
 # Strategy-timeframe mappings
 [[instruments.strategies]]
-name = "strategy_1"
+name = "dummy_strategy_1"
 timeframes = ["1D"]
 enabled = true
-#parameters = { "1D" = { "short_ma_period" = 20, "long_ma_period" = 50 } }
+
+# Parameters for this strategy-timeframe combination
+[[instruments.strategies.parameters.1D]]
+send_signal = true
 
 [[instruments]]
-symbol = "US500"
+symbol = "^GSPC"
 name = "SP500"
 enabled = true
 
@@ -24,15 +27,23 @@ data_sources = ["yfinance"]
 
 # Strategy-timeframe mappings
 [[instruments.strategies]]
-name = "strategy_1"
+name = "dummy_strategy_1"
 timeframes = ["4H", "1D"]
 enabled = true
-#parameters = { "1D" = { "short_ma_period" = 20, "long_ma_period" = 50 } }
 
+# Parameters for 1D timeframe
 [[instruments.strategies.parameters.1D]]
-short_ma_period = 50
-long_ma_period = 200
+send_signal = true
 
+# Parameters for 4H timeframe
 [[instruments.strategies.parameters.4H]]
-short_ma_period = 20
-long_ma_period = 50
+send_signal = false
+
+[[instruments.strategies]]
+name = "dummy_strategy_2"
+timeframes = ["1D"]
+enabled = true
+
+# Parameters for dummy_strategy_2
+[[instruments.strategies.parameters.1D]]
+send_signal = true
