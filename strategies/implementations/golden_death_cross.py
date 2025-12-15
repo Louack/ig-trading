@@ -23,9 +23,9 @@ class GoldenDeathCrossStrategy(BaseStrategy):
             "confirmation_periods", 2
         )  # Wait 2 periods for confirmation
         self.volume_filter = config.get(
-            "volume_filter", True
+            "volume_filter", False
         )  # Use volume confirmation
-        self.rsi_filter = config.get("rsi_filter", True)  # Use RSI filter
+        self.rsi_filter = config.get("rsi_filter", False)  # Use RSI filter
 
         # RSI parameters for filtering
         self.rsi_period = config.get("rsi_period", 14)
