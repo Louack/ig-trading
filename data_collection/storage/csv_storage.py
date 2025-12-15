@@ -13,6 +13,7 @@ from ..interfaces.storage import StorageInterface
 from ..interfaces.market_data import MarketData
 from data_collection.config import STORAGE_CONFIG
 from ..validation import DataValidator
+from settings import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -23,26 +24,21 @@ class CSVStorage(StorageInterface):
     def __init__(
         self,
         data_dir: Optional[str] = None,
-        timeframes: Optional[List[str]] = None,
         validator: Optional[DataValidator] = None,
     ):
         """
         Initialize CSV storage
 
         Args:
-            data_dir: Base directory for data storage (defaults to STORAGE_CONFIG["base_dir"])
-            timeframes: List of timeframes to create subdirectories for (defaults to STORAGE_CONFIG["timeframes"])
+            data_dir: Base directory for data storage (defaults to DATA_STORAGE_PATH env var or STORAGE_CONFIG["base_dir"])
             validator: Optional DataValidator instance (uses static methods if not provided)
         """
-        self.data_dir = Path(data_dir or STORAGE_CONFIG["base_dir"])
-        self.data_dir.mkdir(exist_ok=True)
+        default_dir = secrets.data_storage_path or STORAGE_CONFIG["base_dir"]
+        self.data_dir = Path(data_dir or default_dir)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.validator = validator
-        timeframes_list = timeframes or STORAGE_CONFIG["timeframes"]
-
-        # Create subdirectories for timeframes
-        for timeframe in timeframes_list:
-            (self.data_dir / timeframe).mkdir(exist_ok=True)
+        # Don't pre-create timeframe directories - they will be created on-demand when data is stored
 
     def store_market_data(self, market_data: MarketData) -> bool:
         """
@@ -364,22 +360,22 @@ class CSVStorage(StorageInterface):
         }
 
         try:
-            timeframes_list = STORAGE_CONFIG["timeframes"]
-            for timeframe in timeframes_list:
-                timeframe_dir = self.data_dir / timeframe
+            # Scan for existing timeframe directories instead of using old config
+            if self.data_dir.exists():
+                for item in self.data_dir.iterdir():
+                    if item.is_dir():
+                        timeframe = item.name
+                        files = list(item.glob("*.csv"))
+                        total_size = sum(f.stat().st_size for f in files)
 
-                if timeframe_dir.exists():
-                    files = list(timeframe_dir.glob("*.csv"))
-                    total_size = sum(f.stat().st_size for f in files)
+                        info["timeframes"][timeframe] = {
+                            "files": len(files),
+                            "size_mb": round(total_size / (1024 * 1024), 2),
+                            "symbols": self.list_available_symbols(timeframe),
+                        }
 
-                    info["timeframes"][timeframe] = {
-                        "files": len(files),
-                        "size_mb": round(total_size / (1024 * 1024), 2),
-                        "symbols": self.list_available_symbols(timeframe),
-                    }
-
-                    info["total_files"] += len(files)
-                    info["total_size_mb"] += total_size / (1024 * 1024)
+                        info["total_files"] += len(files)
+                        info["total_size_mb"] += total_size / (1024 * 1024)
 
             info["total_size_mb"] = round(info["total_size_mb"], 2)
 

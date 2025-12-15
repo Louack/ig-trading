@@ -118,11 +118,3 @@ def load_config() -> TradingConfig:
         return config
     except ValidationError as e:
         raise ValidationError(f"Configuration validation failed: {e}") from e
-
-
-if __name__ == "__main__":
-    with open("/home/loic/dev/ig-trading/trading.toml.test", "rb") as f:
-        config_dict = tomllib.load(f)
-        print(config_dict)
-
-    print(get_available_data_sources())

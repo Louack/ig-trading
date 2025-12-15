@@ -28,10 +28,9 @@ def example_basic_usage():
     # Validate configuration
     validated_config = validate_config(config)
 
-    # Create storage with configured timeframes
+    # Create storage
     storage = CSVStorage(
         data_dir=validated_config.storage.base_dir,
-        timeframes=config["storage"]["timeframes"],
     )
 
     # Initialize collector with custom storage
@@ -67,10 +66,9 @@ def example_massive_basic():
     # Validate configuration
     validated_config = validate_config(config)
 
-    # Create storage with configured timeframes
+    # Create storage
     storage = CSVStorage(
         data_dir=validated_config.storage.base_dir,
-        timeframes=config["storage"]["timeframes"],
     )
 
     # Initialize collector with custom storage
@@ -110,10 +108,9 @@ def example_yfinance_basic():
     # Validate configuration
     validated_config = validate_config(config)
 
-    # Create storage with configured timeframes
+    # Create storage
     storage = CSVStorage(
         data_dir=validated_config.storage.base_dir,
-        timeframes=config["storage"]["timeframes"],
     )
 
     # Initialize collector with custom storage

@@ -44,6 +44,9 @@ class Secrets:
     log_dest: str = os.getenv("LOG_DEST", "stdout")
     log_file: str = os.getenv("LOG_FILE", "")
 
+    # Data storage configuration
+    data_storage_path: str = os.getenv("DATA_STORAGE_PATH", "data")
+
     # Legacy support for POLYGON_API_KEY (will be removed in future)
     @property
     def polygon_api_key(self) -> str:

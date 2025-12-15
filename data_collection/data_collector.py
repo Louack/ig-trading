@@ -15,6 +15,7 @@ from .storage.csv_storage import CSVStorage
 from .health import HealthMonitor
 from common.alerting import escalate_error, AlertSeverity
 from data_collection.config import INSTRUMENTS, TIMEFRAMES
+from settings import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class DataCollector:
             enable_health_monitoring: Enable health monitoring for data sources
         """
         self.data_sources: Dict[str, DataSource] = {}
-        self.storage = storage or CSVStorage()
+        self.storage = storage or CSVStorage(data_dir=secrets.data_storage_path)
         self.enable_health_monitoring = enable_health_monitoring
 
         # Initialize health monitor
