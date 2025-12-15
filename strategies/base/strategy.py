@@ -9,6 +9,9 @@ from .signal import Signal, SignalType, SignalStrength
 class BaseStrategy(ABC):
     """Base class for all trading strategies"""
 
+    # String name for TOML config mapping (must be overridden in subclasses)
+    str_name: str = ""
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize strategy with configuration

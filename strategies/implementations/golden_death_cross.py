@@ -10,6 +10,9 @@ from ..base.signal import Signal, SignalType, SignalStrength
 class GoldenDeathCrossStrategy(BaseStrategy):
     """Golden Cross / Death Cross strategy implementation"""
 
+    # String name for TOML config mapping
+    str_name: str = "golden_death_cross"
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
 

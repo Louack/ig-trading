@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 class YFinanceDataSource(DataSource):
     """YFinance API data source implementation"""
 
+    # String name for TOML config mapping
+    str_name: str = "yfinance"
+
     TIMEFRAME_MAPPING = {
         "1min": "1m",
         "5min": "5m",

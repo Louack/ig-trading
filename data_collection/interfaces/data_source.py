@@ -12,6 +12,9 @@ from .market_data import MarketData
 class DataSource(ABC):
     """Abstract base class for all data sources"""
 
+    # String name for TOML config mapping (must be overridden in subclasses)
+    str_name: str = ""
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize data source with configuration

@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 class MassiveDataSource(DataSource):
     """Massive API data source implementation"""
 
+    # String name for TOML config mapping
+    str_name: str = "massive"
+
     TIMEFRAME_MAPPING = {
         "1min": {"multiplier": 1, "timespan": "minute"},
         "5min": {"multiplier": 5, "timespan": "minute"},

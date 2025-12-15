@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 class IGDataSource(DataSource):
     """IG API data source implementation"""
 
+    # String name for TOML config mapping
+    str_name: str = "ig"
+
     def __init__(
         self,
         config: Dict[str, Any],
