@@ -11,7 +11,6 @@ import hashlib
 
 from ..interfaces.storage import StorageInterface
 from ..interfaces.market_data import MarketData
-from data_collection.config import STORAGE_CONFIG
 from ..validation import DataValidator
 from settings import secrets
 
@@ -30,11 +29,10 @@ class CSVStorage(StorageInterface):
         Initialize CSV storage
 
         Args:
-            data_dir: Base directory for data storage (defaults to DATA_STORAGE_PATH env var or STORAGE_CONFIG["base_dir"])
+            data_dir: Base directory for data storage (defaults to DATA_STORAGE_PATH env var)
             validator: Optional DataValidator instance (uses static methods if not provided)
         """
-        default_dir = secrets.data_storage_path or STORAGE_CONFIG["base_dir"]
-        self.data_dir = Path(data_dir or default_dir)
+        self.data_dir = Path(data_dir or secrets.data_storage_path)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.validator = validator
