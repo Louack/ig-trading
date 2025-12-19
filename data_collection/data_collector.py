@@ -14,7 +14,6 @@ from .factory.data_source_factory import DataSourceFactory
 from .storage.csv_storage import CSVStorage
 from .health import HealthMonitor
 from common.alerting import escalate_error, AlertSeverity
-from data_collection.config import INSTRUMENTS, TIMEFRAMES
 from settings import secrets
 
 logger = logging.getLogger(__name__)
@@ -83,10 +82,6 @@ class DataCollector:
                     AlertSeverity.HIGH,
                 )
 
-        # Configuration
-        self.symbols = INSTRUMENTS  # Keep using INSTRUMENTS config but treat as symbols
-        self.timeframes = TIMEFRAMES
-
     def collect_data_for_symbol(
         self,
         symbol: str,
@@ -138,57 +133,6 @@ class DataCollector:
             logger.error(f"Failed to collect data for {symbol} ({timeframe}): {e}")
             return None
 
-    def collect_data_for_category(
-        self, category: str, timeframe: str, source_name: Optional[str] = None
-    ) -> List[MarketData]:
-        """
-        Collect data for all instruments in a category
-
-        Args:
-            category: Instrument category
-            timeframe: Timeframe
-            source_name: Specific source to use (optional)
-
-        Returns:
-            List of MarketData objects
-        """
-        if category not in self.symbols:
-            logger.error(f"Unknown category: {category}")
-            return []
-
-        data_list = []
-        for symbol in self.symbols[category]:
-            market_data = self.collect_data_for_symbol(symbol, timeframe, source_name)
-            if market_data:
-                data_list.append(market_data)
-
-        return data_list
-
-    def collect_all_data(
-        self, source_name: Optional[str] = None
-    ) -> Dict[str, List[MarketData]]:
-        """
-        Collect data for all instruments and timeframes
-
-        Args:
-            source_name: Specific source to use (optional)
-
-        Returns:
-            Dictionary mapping categories to lists of MarketData objects
-        """
-        all_data = {}
-
-        for category in self.symbols.keys():
-            all_data[category] = []
-
-            for timeframe in self.timeframes.keys():
-                category_data = self.collect_data_for_category(
-                    category, timeframe, source_name
-                )
-                all_data[category].extend(category_data)
-
-        return all_data
-
     def store_data(self, market_data: MarketData) -> bool:
         """
         Store market data to storage
@@ -237,29 +181,6 @@ class DataCollector:
             return self.store_data(market_data)
         else:
             return False
-
-    def collect_and_store_all(
-        self, source_name: Optional[str] = None
-    ) -> Dict[str, bool]:
-        """
-        Collect and store data for all instruments and timeframes
-
-        Args:
-            source_name: Specific source to use (optional)
-
-        Returns:
-            Dictionary mapping instrument names to success status
-        """
-        # Collect all data
-        all_data = self.collect_all_data(source_name)
-
-        # Store all data
-        results = {}
-        for category, market_data_list in all_data.items():
-            category_results = self.store_multiple_data(market_data_list)
-            results.update(category_results)
-
-        return results
 
     def get_available_sources(self) -> List[str]:
         """

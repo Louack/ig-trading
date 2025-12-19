@@ -9,7 +9,7 @@ Orchestrates the complete trading pipeline:
 
 import logging
 import importlib
-from datetime import datetime, date
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 import pandas as pd
 
@@ -42,10 +42,7 @@ class TradingOrchestrator:
         self.telegram_transport = TelegramTransport()
         self.console_transport = ConsoleTransport()
 
-        # Mock current date to 2025-05-13 as requested
-        self.mock_date = date(2025, 5, 13)
-
-        logger.info(f"Initialized TradingOrchestrator with mock date: {self.mock_date}")
+        logger.info("Initialized TradingOrchestrator")
 
     def _initialize_data_collector(self) -> bool:
         """Initialize data collector with merged configuration."""
@@ -240,7 +237,6 @@ class TradingOrchestrator:
                 if hasattr(signal, "strength")
                 else "UNKNOWN",
                 "price": getattr(signal, "price", None),
-                "mock_date": self.mock_date.isoformat(),
                 "message": f"Signal: {strategy_name} on {instrument} - {signal.signal_type.value if hasattr(signal, 'signal_type') else 'UNKNOWN'}",
             }
 
@@ -329,20 +325,7 @@ class TradingOrchestrator:
                         instrument.symbol, timeframe, data_source, actual_source_name
                     )
 
-                    if data is None:
-                        results["data_collection_failed"] += 1
-                        continue
-
-                    # Filter data to only include timestamps up to mock date
-                    # This simulates running the strategy as of the mock date
-                    data = data[
-                        data["timestamp"] <= pd.Timestamp(self.mock_date)
-                    ].copy()
-
-                    if data.empty:
-                        logger.warning(
-                            f"No data available up to mock date {self.mock_date} for {instrument.symbol}"
-                        )
+                    if data is None or data.empty:
                         results["data_collection_failed"] += 1
                         continue
 
