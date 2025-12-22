@@ -12,7 +12,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import logging
 from common.logging import setup_logging  # noqa: E402
-from strategies.implementations.golden_death_cross import GoldenDeathCrossStrategy  # noqa: E402
+from strategies.implementations.golden_death_cross import (
+    GoldenDeathCrossStrategy,
+)  # noqa: E402
 from signal_dispatch.transports import TelegramTransport  # noqa: E402
 
 logger = logging.getLogger(__name__)

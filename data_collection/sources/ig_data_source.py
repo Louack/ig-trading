@@ -29,54 +29,58 @@ class IGDataSource(DataSource):
 
     def __init__(
         self,
-        config: Dict[str, Any],
-        client: Optional[IGClient] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
-        rate_limiter: Optional[RateLimiter] = None,
-        retry_config: Optional[RetryConfig] = None,
+        name: str = "IG",
+        account_type: str = "demo",
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         identifier: Optional[str] = None,
         password: Optional[str] = None,
+        client: Optional[IGClient] = None,
+        circuit_breaker: Optional[CircuitBreaker] = None,
+        rate_limiter: Optional[RateLimiter] = None,
+        retry_config: Optional[RetryConfig] = None,
+        timeout: int = 30,
+        max_retries: int = 3,
+        retry_base_delay: float = 1.0,
+        retry_max_delay: float = 30.0,
+        circuit_breaker_threshold: int = 5,
+        circuit_breaker_timeout: int = 60,
+        rate_limit_calls: int = 40,
+        rate_limit_period: int = 60,
     ):
         """
         Initialize IG data source
 
         Args:
-            config: Configuration dictionary
+            name: Name identifier for this data source
+            account_type: Account type ('demo' or 'prod')
+            base_url: Base URL for IG API (defaults to secrets based on account_type)
+            api_key: API key (defaults to secrets based on account_type)
+            identifier: Identifier (defaults to secrets based on account_type)
+            password: Password (defaults to secrets based on account_type)
             client: Optional IGClient instance (created if not provided)
-            circuit_breaker: Optional CircuitBreaker instance (created from config if not provided)
-            rate_limiter: Optional RateLimiter instance (created from config if not provided)
-            retry_config: Optional RetryConfig instance (created from config if not provided)
-            base_url: Optional base URL (overrides config/settings)
-            api_key: Optional API key (overrides config/settings)
-            identifier: Optional identifier (overrides config/settings)
-            password: Optional password (overrides config/settings)
+            circuit_breaker: Optional CircuitBreaker instance (created if not provided)
+            rate_limiter: Optional RateLimiter instance (created if not provided)
+            retry_config: Optional RetryConfig instance (created if not provided)
+            timeout: Request timeout in seconds
+            max_retries: Maximum number of retry attempts
+            retry_base_delay: Base delay for retries in seconds
+            retry_max_delay: Maximum delay for retries in seconds
+            circuit_breaker_threshold: Number of failures before opening circuit
+            circuit_breaker_timeout: Time in seconds before attempting recovery
+            rate_limit_calls: Maximum number of calls per period
+            rate_limit_period: Time period in seconds for rate limiting
         """
-        super().__init__(config)
+        super().__init__(name)
 
         # IG-specific configuration
-        self.account_type = config.get("account_type", "demo")
+        self.account_type = account_type
 
-        # Use injected values or fall back to config/settings
-        self.base_url = (
-            base_url
-            or config.get("base_url")
-            or secrets.ig_base_urls[self.account_type]
-        )
-        self.api_key = (
-            api_key or config.get("api_key") or secrets.ig_api_keys[self.account_type]
-        )
-        self.identifier = (
-            identifier
-            or config.get("identifier")
-            or secrets.ig_identifiers[self.account_type]
-        )
-        self.password = (
-            password
-            or config.get("password")
-            or secrets.ig_passwords[self.account_type]
-        )
+        # Use provided values or fall back to secrets
+        self.base_url = base_url or secrets.ig_base_urls[self.account_type]
+        self.api_key = api_key or secrets.ig_api_keys[self.account_type]
+        self.identifier = identifier or secrets.ig_identifiers[self.account_type]
+        self.password = password or secrets.ig_passwords[self.account_type]
 
         # IG client (will be created in connect() if not provided)
         self._client: Optional[IGClient] = client
@@ -92,24 +96,24 @@ class IGDataSource(DataSource):
         }
 
         # Resilience configuration
-        self.timeout = config.get("timeout", 30)
-        self.max_retries = config.get("max_retries", 3)
+        self.timeout = timeout
+        self.max_retries = max_retries
 
-        # Circuit breaker: use injected or create from config
+        # Circuit breaker: use injected or create with defaults
         self.circuit_breaker = circuit_breaker or CircuitBreaker(
-            failure_threshold=config.get("circuit_breaker_threshold", 5),
-            recovery_timeout=config.get("circuit_breaker_timeout", 60),
+            failure_threshold=circuit_breaker_threshold,
+            recovery_timeout=circuit_breaker_timeout,
         )
 
         self.rate_limiter = rate_limiter or RateLimiter(
-            max_calls=config.get("rate_limit_calls", 40),
-            period_seconds=config.get("rate_limit_period", 60),
+            max_calls=rate_limit_calls,
+            period_seconds=rate_limit_period,
         )
 
         self.retry_config = retry_config or RetryConfig(
-            max_attempts=self.max_retries,
-            base_delay=config.get("retry_base_delay", 1.0),
-            max_delay=config.get("retry_max_delay", 30.0),
+            max_attempts=max_retries,
+            base_delay=retry_base_delay,
+            max_delay=retry_max_delay,
             exponential=True,
             jitter=True,
         )

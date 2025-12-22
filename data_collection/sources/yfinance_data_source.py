@@ -10,6 +10,7 @@ import pandas as pd
 from ..interfaces.data_source import DataSource
 from ..interfaces.market_data import MarketData, MarketDataPoint, PriceData
 from api_gateway.yfinance_client import YFinanceClient
+from common.resilience import CircuitBreaker, RateLimiter, RetryConfig
 from common.alerting import escalate_error, AlertSeverity
 
 logger = logging.getLogger(__name__)
@@ -63,38 +64,56 @@ class YFinanceDataSource(DataSource):
 
     def __init__(
         self,
-        config: Dict[str, Any],
+        name: str = "YFinance",
         client: Optional[YFinanceClient] = None,
+        circuit_breaker: Optional[CircuitBreaker] = None,
+        rate_limiter: Optional[RateLimiter] = None,
+        retry_config: Optional[RetryConfig] = None,
+        max_retries: int = 3,
+        retry_base_delay: float = 1.0,
+        retry_max_delay: float = 30.0,
+        circuit_breaker_threshold: int = 10,
+        circuit_breaker_timeout: int = 60,
+        rate_limit_calls: int = 30,
+        rate_limit_period: int = 60,
     ):
         """
         Initialize YFinance data source
 
         Args:
-            config: Configuration dictionary
+            name: Name identifier for this data source
             client: Optional YFinanceClient instance (created if not provided)
+            circuit_breaker: Optional CircuitBreaker instance (created if not provided)
+            rate_limiter: Optional RateLimiter instance (created if not provided)
+            retry_config: Optional RetryConfig instance (created if not provided)
+            max_retries: Maximum number of retry attempts
+            retry_base_delay: Base delay for retries in seconds
+            retry_max_delay: Maximum delay for retries in seconds
+            circuit_breaker_threshold: Number of failures before opening circuit
+            circuit_breaker_timeout: Time in seconds before attempting recovery
+            rate_limit_calls: Maximum number of calls per period (YFinance: ~2000/hour)
+            rate_limit_period: Time period in seconds for rate limiting
         """
-        super().__init__(config)
+        super().__init__(name)
 
         if client:
             self._client = client
         else:
-            from common.resilience import CircuitBreaker, RateLimiter, RetryConfig
-
             # YFinance has strict rate limits (free tier: ~2000 requests/hour)
-            rate_limiter = RateLimiter(
-                max_calls=config.get("rate_limit_calls", 30),
-                period_seconds=config.get("rate_limit_period", 60),
+            rate_limiter = rate_limiter or RateLimiter(
+                max_calls=rate_limit_calls,
+                period_seconds=rate_limit_period,
             )
 
-            circuit_breaker = CircuitBreaker(
-                failure_threshold=config.get("circuit_breaker_threshold", 10),
-                recovery_timeout=config.get("circuit_breaker_timeout", 60),
+            circuit_breaker = circuit_breaker or CircuitBreaker(
+                failure_threshold=circuit_breaker_threshold,
+                recovery_timeout=circuit_breaker_timeout,
             )
 
-            retry_config = RetryConfig(
-                max_attempts=config.get("max_retries", 3),
-                base_delay=config.get("retry_base_delay", 1.0),
-                max_delay=config.get("retry_max_delay", 30.0),
+            retry_config = retry_config or RetryConfig(
+                max_attempts=max_retries,
+                base_delay=retry_base_delay,
+                max_delay=retry_max_delay,
                 exponential=True,
                 jitter=True,
             )

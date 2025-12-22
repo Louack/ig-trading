@@ -3,7 +3,9 @@ Factory for creating data sources
 """
 
 import logging
-from typing import Dict, Any, Type, List
+from typing import Dict, List, Callable
+
+from settings import secrets
 from ..interfaces.data_source import DataSource
 from ..sources.ig_data_source import IGDataSource
 from ..sources.massive_data_source import MassiveDataSource
@@ -15,51 +17,20 @@ logger = logging.getLogger(__name__)
 class DataSourceFactory:
     """Factory for creating data source instances"""
 
-    _sources: Dict[str, Type[DataSource]] = {
-        "ig": IGDataSource,
-        "massive": MassiveDataSource,
-        "yfinance": YFinanceDataSource,
-    }
-
     @classmethod
-    def create_data_source(
-        cls, source_type: str, config: Dict[str, Any], **dependencies: Any
-    ) -> DataSource:
+    def _get_available_configs(cls) -> Dict[str, Callable[[], DataSource]]:
         """
-        Create a data source instance
-
-        Args:
-            source_type: Type of data source ('ig', 'massive', etc.)
-            config: Configuration for the data source
-            **dependencies: Optional dependencies to inject (client, circuit_breaker, etc.)
+        Get mapping of source names to factory methods.
 
         Returns:
-            DataSource instance
-
-        Raises:
-            ValueError: If source type is not supported
+            Dictionary mapping source names to factory callables
         """
-        if source_type not in cls._sources:
-            available_sources = list(cls._sources.keys())
-            raise ValueError(
-                f"Unsupported data source type: {source_type}. Available: {available_sources}"
-            )
-
-        source_class = cls._sources[source_type]
-
-        try:
-            # Add source type to config
-            config["source_type"] = source_type
-
-            # Pass dependencies if provided, otherwise use config defaults
-            source_instance = source_class(config, **dependencies)
-
-            logger.info(f"Created {source_type} data source")
-            return source_instance
-
-        except Exception as e:
-            logger.error(f"Failed to create {source_type} data source: {e}")
-            raise
+        return {
+            "ig_demo": cls.create_ig_demo_data_source,
+            "ig_prod": cls.create_ig_prod_data_source,
+            "massive": cls.create_massive_data_source,
+            "yfinance": cls.create_yfinance_data_source,
+        }
 
     @classmethod
     def get_available_sources(cls) -> List[str]:
@@ -69,59 +40,70 @@ class DataSourceFactory:
         Returns:
             List of available source types
         """
-        return list(cls._sources.keys())
+        return list(cls._get_available_configs().keys())
 
     @classmethod
-    def register_data_source(
-        cls, source_type: str, source_class: Type[DataSource]
-    ) -> None:
+    def create_multi_source(cls, source_names: List[str]) -> Dict[str, DataSource]:
         """
-        Register a new data source type
+        Create multiple data sources from source names.
 
         Args:
-            source_type: Type identifier for the data source
-            source_class: DataSource class to register
-        """
-        if not issubclass(source_class, DataSource):
-            raise ValueError(f"Source class must inherit from DataSource")
-
-        cls._sources[source_type] = source_class
-        logger.info(f"Registered data source: {source_type}")
-
-    @classmethod
-    def unregister_data_source(cls, source_type: str) -> None:
-        """
-        Unregister a data source type
-
-        Args:
-            source_type: Type identifier to unregister
-        """
-        if source_type in cls._sources:
-            del cls._sources[source_type]
-            logger.info(f"Unregistered data source: {source_type}")
-        else:
-            logger.warning(f"Data source {source_type} was not registered")
-
-    @classmethod
-    def create_multi_source(
-        cls, configs: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, DataSource]:
-        """
-        Create multiple data sources from configurations
-
-        Args:
-            configs: Dictionary mapping source types to their configurations
+            source_names: List of source names to create
 
         Returns:
-            Dictionary mapping source types to DataSource instances
+            Dictionary mapping source names to DataSource instances
         """
-        sources = {}
+        sources: Dict[str, DataSource] = {}
+        available_configs = cls._get_available_configs()
 
-        for source_type, config in configs.items():
+        for source_name in set(source_names):
+            if source_name not in available_configs:
+                logger.warning(f"Unknown source name: {source_name}, skipping")
+                continue
             try:
-                sources[source_type] = cls.create_data_source(source_type, config)
+                sources[source_name] = available_configs[source_name]()
+                logger.info(f"Created {source_name} data source")
             except Exception as e:
-                logger.error(f"Failed to create {source_type} source: {e}")
-                # Continue with other sources
+                logger.error(f"Failed to create {source_name} data source: {e}")
 
         return sources
+
+    @classmethod
+    def create_ig_demo_data_source(cls) -> IGDataSource:
+        """Create IG demo account data source."""
+        return IGDataSource(
+            name="IG Demo",
+            account_type="demo",
+            base_url=secrets.ig_base_urls["demo"],
+            api_key=secrets.ig_api_keys["demo"],
+            identifier=secrets.ig_identifiers["demo"],
+            password=secrets.ig_passwords["demo"],
+        )
+
+    @classmethod
+    def create_ig_prod_data_source(cls) -> IGDataSource:
+        """Create IG production account data source."""
+        return IGDataSource(
+            name="IG Prod",
+            account_type="prod",
+            base_url=secrets.ig_base_urls["prod"],
+            api_key=secrets.ig_api_keys["prod"],
+            identifier=secrets.ig_identifiers["prod"],
+            password=secrets.ig_passwords["prod"],
+        )
+
+    @classmethod
+    def create_massive_data_source(cls) -> MassiveDataSource:
+        """Create Massive data source."""
+        if not secrets.massive_api_key or secrets.massive_api_key == "dummy_key":
+            raise ValueError("Massive API key is required and must be valid")
+        return MassiveDataSource(
+            api_key=secrets.massive_api_key,
+            name="Massive",
+            tier="free",
+        )
+
+    @classmethod
+    def create_yfinance_data_source(cls) -> YFinanceDataSource:
+        """Create YFinance data source."""
+        return YFinanceDataSource(name="YFinance")

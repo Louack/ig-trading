@@ -273,9 +273,11 @@ class InteractiveChart:
         """
         if volume and "volume" in plot_df.columns:
             colors = [
-                "green"
-                if plot_df.iloc[i]["close"] >= plot_df.iloc[i]["open"]
-                else "red"
+                (
+                    "green"
+                    if plot_df.iloc[i]["close"] >= plot_df.iloc[i]["open"]
+                    else "red"
+                )
                 for i in range(len(plot_df))
             ]
 

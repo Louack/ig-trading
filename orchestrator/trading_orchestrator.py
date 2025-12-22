@@ -19,7 +19,7 @@ from config import (
     get_available_strategies,
 )
 from data_collection.data_collector import DataCollector
-from data_collection.config_validation import validate_config
+from data_collection.factory.data_source_factory import DataSourceFactory
 from settings import secrets
 from signal_dispatch.transports import TelegramTransport, ConsoleTransport
 from common.logging import setup_logging
@@ -45,11 +45,8 @@ class TradingOrchestrator:
         logger.info("Initialized TradingOrchestrator")
 
     def _initialize_data_collector(self) -> bool:
-        """Initialize data collector with merged configuration."""
+        """Initialize data collector with data sources instantiated upstream."""
         try:
-            # Build data source configuration from instruments + secrets
-            data_sources_dict: Dict[str, Dict[str, Any]] = {}
-
             # Collect unique data source names from all instruments
             source_names = {
                 ds_name
@@ -57,44 +54,30 @@ class TradingOrchestrator:
                 for ds_name in instrument.data_sources
             }
 
-            for source_name in source_names:
-                ds_dict: Dict[str, Any] = {
-                    "name": source_name,
-                    "type": source_name,
-                }
+            # Validate that all source names match factory names
+            available_factory_sources = DataSourceFactory.get_available_sources()
+            invalid_sources = [
+                name for name in source_names if name not in available_factory_sources
+            ]
 
-                # Add required fields from secrets based on data source type
-                if source_name == "ig":
-                    # Default to demo; can be adjusted via env
-                    ds_dict["account_type"] = getattr(
-                        secrets, "ig_account_type", "demo"
-                    )
-                elif source_name == "massive":
-                    # Skip massive if API key is invalid
-                    if (
-                        not secrets.massive_api_key
-                        or secrets.massive_api_key == "dummy_key"
-                    ):
-                        logger.warning(
-                            f"Skipping {source_name} data source due to invalid API key"
-                        )
-                        continue
-                    ds_dict["api_key"] = secrets.massive_api_key
+            if invalid_sources:
+                logger.error(
+                    f"Invalid data source names in config: {invalid_sources}. "
+                    f"Available sources: {available_factory_sources}"
+                )
+                return False
 
-                # YFinance currently does not require extra fields
-                data_sources_dict[source_name] = ds_dict
+            # Instantiate data sources using factory (names must match exactly)
+            data_sources = DataSourceFactory.create_multi_source(list(source_names))
 
-            data_collection_config = {
-                "data_sources": data_sources_dict,
-                "storage": {},  # Not in TOML, keep empty for now
-                "enable_health_checks": True,  # Default enabled
-            }
+            if not data_sources:
+                logger.error("No data sources could be instantiated")
+                return False
 
-            # Validate and create data collector
-            validated_config = validate_config(data_collection_config)
+            # Create data collector with instantiated sources
             self.data_collector = DataCollector(
-                data_sources=validated_config.data_sources,
-                enable_health_monitoring=validated_config.enable_health_checks,
+                data_sources=data_sources,
+                enable_health_monitoring=True,
             )
 
             logger.info("Data collector initialized successfully")
@@ -108,8 +91,7 @@ class TradingOrchestrator:
         self,
         instrument: str,
         timeframe: str,
-        config_source_name: str,
-        actual_source_name: str,
+        factory_source_name: str,
     ) -> Optional[pd.DataFrame]:
         """
         Collect data for a specific instrument and timeframe.
@@ -117,26 +99,45 @@ class TradingOrchestrator:
         Args:
             instrument: Instrument symbol
             timeframe: Timeframe string
-            config_source_name: Data source name from config (lowercase)
-            actual_source_name: Actual source name used by MarketData (capitalized)
+            factory_source_name: Data source name (must match factory name)
 
         Returns:
             DataFrame with collected data or None if failed
         """
         try:
             logger.info(
-                f"Collecting data for {instrument} on {timeframe} from {config_source_name}"
+                f"Collecting data for {instrument} on {timeframe} from {factory_source_name}"
             )
 
-            # Collect and store data - use config source name for collection
+            # Validate source exists
+            if factory_source_name not in self.data_collector.data_sources:
+                logger.error(
+                    f"Data source {factory_source_name} not available in data collector"
+                )
+                return None
+
+            # Get the DataSource to determine MarketData source name
+            data_source = self.data_collector.data_sources[factory_source_name]
+            # MarketData uses hardcoded source strings, map factory key to MarketData source
+            market_data_source_map = {
+                "ig_demo": "IG",
+                "ig_prod": "IG",
+                "massive": "Massive",
+                "yfinance": "YFinance",
+            }
+            market_data_source = market_data_source_map.get(
+                factory_source_name, data_source.name
+            )
+
+            # Collect and store data
             success = self.data_collector.collect_and_store(
-                symbol=instrument, timeframe=timeframe, source_name=config_source_name
+                symbol=instrument, timeframe=timeframe, source_name=factory_source_name
             )
 
             if success:
-                # Load the collected data - use actual source name for loading
+                # Load the collected data - use MarketData source name for loading
                 data = self.data_collector.storage.load_latest_data(
-                    symbol=instrument, timeframe=timeframe, source=actual_source_name
+                    symbol=instrument, timeframe=timeframe, source=market_data_source
                 )
 
                 if data is not None and not data.empty:
@@ -230,12 +231,14 @@ class TradingOrchestrator:
                 "timestamp": datetime.now().isoformat(),
                 "instrument": instrument,
                 "strategy": strategy_name,
-                "signal_type": signal.signal_type.value
-                if hasattr(signal, "signal_type")
-                else str(signal),
-                "strength": signal.strength.value
-                if hasattr(signal, "strength")
-                else "UNKNOWN",
+                "signal_type": (
+                    signal.signal_type.value
+                    if hasattr(signal, "signal_type")
+                    else str(signal)
+                ),
+                "strength": (
+                    signal.strength.value if hasattr(signal, "strength") else "UNKNOWN"
+                ),
                 "price": getattr(signal, "price", None),
                 "message": f"Signal: {strategy_name} on {instrument} - {signal.signal_type.value if hasattr(signal, 'signal_type') else 'UNKNOWN'}",
             }
@@ -301,28 +304,26 @@ class TradingOrchestrator:
                 # Process each timeframe
                 for timeframe in strategy_cfg.timeframes:
                     # Determine data source (use first available)
-                    data_source = (
+                    factory_source_name = (
                         instrument.data_sources[0] if instrument.data_sources else None
                     )
-                    if not data_source:
+                    if not factory_source_name:
                         logger.warning(
                             f"No data source configured for {instrument.symbol}"
                         )
                         continue
 
-                    # Map config data source names to actual source names used by MarketData
-                    source_name_mapping = {
-                        "yfinance": "YFinance",
-                        "ig": "IG",
-                        "massive": "Massive",
-                    }
-                    actual_source_name = source_name_mapping.get(
-                        data_source, data_source
-                    )
+                    # Validate source exists in data collector
+                    if factory_source_name not in self.data_collector.data_sources:
+                        logger.error(
+                            f"Data source {factory_source_name} not available for {instrument.symbol}"
+                        )
+                        results["data_collection_failed"] += 1
+                        continue
 
                     # Collect data
                     data = self._collect_data_for_instrument_timeframe(
-                        instrument.symbol, timeframe, data_source, actual_source_name
+                        instrument.symbol, timeframe, factory_source_name
                     )
 
                     if data is None or data.empty:

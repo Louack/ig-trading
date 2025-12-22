@@ -15,15 +15,14 @@ class DataSource(ABC):
     # String name for TOML config mapping (must be overridden in subclasses)
     str_name: str = ""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, name: str):
         """
-        Initialize data source with configuration
+        Initialize data source
 
         Args:
-            config: Data source specific configuration
+            name: Name identifier for this data source
         """
-        self.config = config
-        self.name = config.get("name", self.__class__.__name__)
+        self.name = name
 
     @abstractmethod
     def connect(self) -> bool:
@@ -124,5 +123,4 @@ class DataSource(ABC):
             "name": self.name,
             "type": self.__class__.__name__,
             "connected": self.is_connected(),
-            "config": self.config,
         }

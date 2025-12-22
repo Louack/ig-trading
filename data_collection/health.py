@@ -106,9 +106,9 @@ class DataSourceHealth:
             "source_name": self.source.name,
             "connected": self.source.is_connected(),
             "healthy": self.is_healthy(),
-            "last_success": self.last_success.isoformat()
-            if self.last_success
-            else None,
+            "last_success": (
+                self.last_success.isoformat() if self.last_success else None
+            ),
             "last_check": self.last_check.isoformat() if self.last_check else None,
             "consecutive_failures": self.consecutive_failures,
             "total_checks": self.total_checks,

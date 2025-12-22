@@ -5,7 +5,7 @@ Examples demonstrating the improved data collection module features
 import logging
 from datetime import datetime
 from data_collection.data_collector import DataCollector
-from data_collection.config_validation import validate_config
+from data_collection.factory.data_source_factory import DataSourceFactory
 from common.alerting import alerting_service
 from data_collection.storage import CSVStorage
 from settings import secrets
@@ -17,24 +17,14 @@ logger = logging.getLogger(__name__)
 def example_basic_usage():
     """Example 1: Basic data collection"""
 
-    config = {
-        "data_sources": {
-            "ig_demo": {"type": "ig", "name": "IG Demo Account", "account_type": "prod"}
-        },
-        "storage": {"base_dir": "data", "timeframes": ["1D"]},
-        "enable_health_checks": True,
-    }
-
-    # Validate configuration
-    validated_config = validate_config(config)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(["ig_demo"])
 
     # Create storage
-    storage = CSVStorage(
-        data_dir=validated_config.storage.base_dir,
-    )
+    storage = CSVStorage(data_dir="data")
 
-    # Initialize collector with custom storage
-    collector = DataCollector(validated_config.data_sources, storage=storage)
+    # Initialize collector with instantiated sources
+    collector = DataCollector(data_sources, storage=storage)
 
     # Collect and store data
     success = collector.collect_and_store(symbol="CS.D.BITCOIN.CFE.IP", timeframe="1D")
@@ -50,29 +40,14 @@ def example_basic_usage():
 def example_massive_basic():
     """Example: Massive data source - single stock, 1D timeframe"""
 
-    config = {
-        "data_sources": {
-            "massive": {
-                "type": "massive",
-                "name": "Massive",
-                "api_key": secrets.massive_api_key,
-                "tier": "free",
-            }
-        },
-        "storage": {"base_dir": "data", "timeframes": ["1D"]},
-        "enable_health_checks": True,
-    }
-
-    # Validate configuration
-    validated_config = validate_config(config)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(["massive"])
 
     # Create storage
-    storage = CSVStorage(
-        data_dir=validated_config.storage.base_dir,
-    )
+    storage = CSVStorage(data_dir="data")
 
-    # Initialize collector with custom storage
-    collector = DataCollector(validated_config.data_sources, storage=storage)
+    # Initialize collector with instantiated sources
+    collector = DataCollector(data_sources, storage=storage)
 
     # Collect and store data for a single stock
     success = collector.collect_and_store(
@@ -92,29 +67,14 @@ def example_massive_basic():
 def example_yfinance_basic():
     """Example: YFinance data source - single stock, 1D timeframe"""
 
-    config = {
-        "data_sources": {
-            "yfinance": {
-                "type": "yfinance",
-                "name": "YFinance",
-                "rate_limit_calls": 30,
-                "rate_limit_period": 60,
-            }
-        },
-        "storage": {"base_dir": "data", "timeframes": ["1D"]},
-        "enable_health_checks": True,
-    }
-
-    # Validate configuration
-    validated_config = validate_config(config)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(["yfinance"])
 
     # Create storage
-    storage = CSVStorage(
-        data_dir=validated_config.storage.base_dir,
-    )
+    storage = CSVStorage(data_dir="data")
 
-    # Initialize collector with custom storage
-    collector = DataCollector(validated_config.data_sources, storage=storage)
+    # Initialize collector with instantiated sources
+    collector = DataCollector(data_sources, storage=storage)
 
     # Collect and store data for a single stock
     success = collector.collect_and_store(
@@ -134,15 +94,12 @@ def example_yfinance_basic():
 def example_context_manager():
     """Example 2: Using context manager for automatic cleanup"""
 
-    config = {
-        "data_sources": {
-            "ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}
-        }
-    }
+    config = {"ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}}
 
-    validated_config = validate_config(config)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(config)
 
-    with DataCollector(validated_config.data_sources) as collector:
+    with DataCollector(data_sources) as collector:
         # Collect data for multiple symbols
         symbols = ["IX.D.FTSE.IFM.IP", "IX.D.DAX.IFM.IP"]
 
@@ -157,17 +114,11 @@ def example_context_manager():
 def example_health_monitoring():
     """Example 3: Health monitoring"""
 
-    config = {
-        "data_sources": {
-            "ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}
-        },
-        "enable_health_checks": True,
-    }
+    config = {"ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}}
 
-    validated_config = validate_config(config)
-    collector = DataCollector(
-        validated_config.data_sources, enable_health_monitoring=True
-    )
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(config)
+    collector = DataCollector(data_sources, enable_health_monitoring=True)
 
     # Check health
     health_results = collector.check_health()
@@ -201,14 +152,11 @@ def example_custom_alert_handler():
     # Register custom handler
     alerting_service.register_handler(send_to_telegram)
 
-    config = {
-        "data_sources": {
-            "ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}
-        }
-    }
+    config = {"ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}}
 
-    validated_config = validate_config(config)
-    collector = DataCollector(validated_config.data_sources)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(config)
+    collector = DataCollector(data_sources)
 
     # Errors are automatically escalated through registered handlers
     collector.collect_and_store("INVALID_SYMBOL", "1D")
@@ -223,38 +171,10 @@ def example_custom_alert_handler():
 def example_resilience_configuration():
     """Example 5: Advanced resilience configuration"""
 
-    config = {
-        "data_sources": {
-            "ig_demo": {
-                "type": "ig",
-                "name": "IG Demo",
-                "account_type": "demo",
-                # Timeout configuration
-                "timeout": 30,
-                # Retry configuration
-                "max_retries": 5,
-                "retry_base_delay": 2.0,
-                "retry_max_delay": 60.0,
-                # Circuit breaker configuration
-                "circuit_breaker_threshold": 10,
-                "circuit_breaker_timeout": 120,
-                # Rate limiting configuration
-                "rate_limit_calls": 30,  # Conservative for production
-                "rate_limit_period": 60,
-            }
-        },
-        "storage": {
-            "base_dir": "production_data",
-            "format": "csv",
-            "enable_checksums": True,
-            "atomic_writes": True,
-        },
-    }
-
-    # Validation ensures all values are within acceptable ranges
-    validated_config = validate_config(config)
-
-    collector = DataCollector(validated_config.data_sources)
+    # Instantiate data sources (with custom resilience settings would require
+    # creating sources directly, not via factory)
+    data_sources = DataSourceFactory.create_multi_source(["ig_demo"])
+    collector = DataCollector(data_sources)
 
     # Collection automatically uses all resilience features:
     # - Retries with exponential backoff
@@ -270,16 +190,12 @@ def example_resilience_configuration():
 def example_batch_collection():
     """Example 6: Batch collection with error handling"""
 
-    config = {
-        "data_sources": {
-            "ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}
-        },
-        "enable_health_checks": True,
-    }
+    config = {"ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}}
 
-    validated_config = validate_config(config)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(config)
 
-    with DataCollector(validated_config.data_sources) as collector:
+    with DataCollector(data_sources) as collector:
         symbols = ["IX.D.FTSE.IFM.IP", "IX.D.DAX.IFM.IP", "IX.D.SPTRD.IFM.IP"]
 
         results = {}
@@ -338,14 +254,11 @@ def example_data_validation():
 def example_storage_info():
     """Example 8: Storage information and statistics"""
 
-    config = {
-        "data_sources": {
-            "ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}
-        }
-    }
+    config = {"ig_demo": {"type": "ig", "name": "IG Demo", "account_type": "demo"}}
 
-    validated_config = validate_config(config)
-    collector = DataCollector(validated_config.data_sources)
+    # Instantiate data sources
+    data_sources = DataSourceFactory.create_multi_source(config)
+    collector = DataCollector(data_sources)
 
     # Get storage information
     storage_info = collector.get_storage_info()

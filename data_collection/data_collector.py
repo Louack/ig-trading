@@ -10,7 +10,6 @@ import pandas as pd
 from .interfaces.data_source import DataSource
 from .interfaces.market_data import MarketData
 from .interfaces.storage import StorageInterface
-from .factory.data_source_factory import DataSourceFactory
 from .storage.csv_storage import CSVStorage
 from .health import HealthMonitor
 from common.alerting import escalate_error, AlertSeverity
@@ -24,7 +23,7 @@ class DataCollector:
 
     def __init__(
         self,
-        data_sources: Dict[str, Dict[str, Any]],
+        data_sources: Dict[str, DataSource],
         storage: Optional[StorageInterface] = None,
         health_monitor: Optional[HealthMonitor] = None,
         enable_health_monitoring: bool = True,
@@ -33,7 +32,7 @@ class DataCollector:
         Initialize data collector with multiple data sources
 
         Args:
-            data_sources: Dictionary mapping source names to their configurations
+            data_sources: Dictionary mapping source names to DataSource instances
             storage: Optional StorageInterface instance (defaults to CSVStorage if not provided)
             health_monitor: Optional HealthMonitor instance (created if not provided)
             enable_health_monitoring: Enable health monitoring for data sources
@@ -48,12 +47,9 @@ class DataCollector:
         else:
             self.health_monitor = None
 
-        # Initialize data sources
-        for source_name, config in data_sources.items():
+        # Register provided data sources
+        for source_name, source in data_sources.items():
             try:
-                source_type = config.get("type", source_name)
-                source = DataSourceFactory.create_data_source(source_type, config)
-
                 # Connect to data source
                 if source.connect():
                     self.data_sources[source_name] = source
@@ -71,13 +67,12 @@ class DataCollector:
                     )
 
             except Exception as e:
-                logger.error(f"Failed to initialize {source_name} data source: {e}")
+                logger.error(f"Failed to register {source_name} data source: {e}")
                 escalate_error(
                     e,
                     {
                         "component": "DataCollector",
                         "source": source_name,
-                        "config": config,
                     },
                     AlertSeverity.HIGH,
                 )

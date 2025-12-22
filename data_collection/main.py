@@ -6,6 +6,7 @@ Main script for the data collection service
 import sys
 import os
 from datetime import datetime
+from typing import List
 import logging
 
 from common.logging import setup_logging  # noqa: E402
@@ -16,7 +17,7 @@ from settings import secrets  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from data_collection.data_collector import DataCollector
-from data_collection.config_validation import validate_config
+from data_collection.factory.data_source_factory import DataSourceFactory
 
 logger = logging.getLogger(__name__)
 
@@ -31,42 +32,41 @@ def main():
         filename=secrets.log_file,
     )
 
-    # Convert TradingConfig to dict format expected by validate_config
-    # CollectorConfig expects data_sources as Dict[name, config_dict]
-    # Need to merge TOML config with secrets (API keys, etc.)
-    data_sources_dict = {}
-
-    for ds in config.data_sources:
-        ds_dict = ds.dict()
-
-        # Add required fields from secrets based on data source type
-        if ds.type == "ig":
-            # IG needs account_type (demo/prod)
-            ds_dict["account_type"] = "demo"  # Default to demo, can be overridden
-        elif ds.type == "massive":
-            # Massive needs api_key
-            ds_dict["api_key"] = secrets.massive_api_key
-        # YFinance doesn't need additional fields
-
-        data_sources_dict[ds.name] = ds_dict
-
-    data_collection_config = {
-        "data_sources": data_sources_dict,
-        "storage": {},  # Not in TOML, keep empty for now
-        "enable_health_checks": True,  # Default enabled
+    # Collect unique data source names from all instruments
+    source_names = {
+        ds_name
+        for instrument in config.instruments
+        for ds_name in instrument.data_sources
     }
 
-    try:
-        # Validate configuration
-        logger.info("Validating configuration...")
-        validated_config = validate_config(data_collection_config)
-        logger.info("Configuration validated successfully")
+    # Validate that all source names match factory names
+    available_factory_sources = DataSourceFactory.get_available_sources()
+    invalid_sources = [
+        name for name in source_names if name not in available_factory_sources
+    ]
 
-        # Initialize data collector
+    if invalid_sources:
+        logger.error(
+            f"Invalid data source names in config: {invalid_sources}. "
+            f"Available sources: {available_factory_sources}"
+        )
+        return
+
+    try:
+        # Instantiate data sources using factory (names must match exactly)
+        logger.info("Instantiating data sources...")
+        data_sources = DataSourceFactory.create_multi_source(list(source_names))
+        logger.info(f"Instantiated {len(data_sources)} data sources")
+
+        if not data_sources:
+            logger.error("No data sources could be instantiated")
+            return
+
+        # Initialize data collector with instantiated sources
         logger.info("Initializing data collector...")
         collector = DataCollector(
-            validated_config.data_sources,
-            enable_health_monitoring=validated_config.enable_health_checks,
+            data_sources=data_sources,
+            enable_health_monitoring=True,
         )
 
         # Check available sources

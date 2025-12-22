@@ -10,6 +10,7 @@ from polygon.rest.models import Agg
 from ..interfaces.data_source import DataSource
 from ..interfaces.market_data import MarketData, MarketDataPoint, PriceData
 from api_gateway.massive_client import MassiveClient
+from common.resilience import CircuitBreaker, RateLimiter, RetryConfig
 from common.alerting import escalate_error, AlertSeverity
 
 logger = logging.getLogger(__name__)
@@ -34,47 +35,70 @@ class MassiveDataSource(DataSource):
 
     def __init__(
         self,
-        config: Dict[str, Any],
+        api_key: str,
+        name: str = "Massive",
+        tier: str = "free",
         client: Optional[MassiveClient] = None,
-        api_key: Optional[str] = None,
+        circuit_breaker: Optional[CircuitBreaker] = None,
+        rate_limiter: Optional[RateLimiter] = None,
+        retry_config: Optional[RetryConfig] = None,
+        max_retries: int = 3,
+        retry_base_delay: float = 1.0,
+        retry_max_delay: float = 30.0,
+        circuit_breaker_threshold: int = 10,
+        circuit_breaker_timeout: int = 60,
+        rate_limit_calls: Optional[int] = None,
+        rate_limit_period: int = 60,
     ):
         """
         Initialize Massive data source
 
         Args:
-            config: Configuration dictionary
+            name: Name identifier for this data source
+            api_key: Massive API key (required)
+            tier: API tier ('free', 'starter', 'developer', 'advanced')
             client: Optional MassiveClient instance (created if not provided)
-            api_key: Optional API key (overrides config)
+            circuit_breaker: Optional CircuitBreaker instance (created if not provided)
+            rate_limiter: Optional RateLimiter instance (created if not provided)
+            retry_config: Optional RetryConfig instance (created if not provided)
+            max_retries: Maximum number of retry attempts
+            retry_base_delay: Base delay for retries in seconds
+            retry_max_delay: Maximum delay for retries in seconds
+            circuit_breaker_threshold: Number of failures before opening circuit
+            circuit_breaker_timeout: Time in seconds before attempting recovery
+            rate_limit_calls: Maximum number of calls per period (defaults based on tier)
+            rate_limit_period: Time period in seconds for rate limiting
         """
-        super().__init__(config)
+        super().__init__(name)
 
-        self.api_key = api_key or config.get("api_key")
-        if not self.api_key:
+        if not api_key:
             raise ValueError("Massive API key is required")
+        self.api_key = api_key
+        self.tier = tier
 
         # Use gateway client (resilience features are handled at gateway level)
         if client:
             self._client = client
         else:
-            # Create gateway client with resilience features from config
-            from common.resilience import CircuitBreaker, RateLimiter, RetryConfig
+            # Create gateway client with resilience features
+            # Default rate limit based on tier
+            if rate_limit_calls is None:
+                rate_limit_calls = 4 if tier == "free" else 100
 
-            tier = config.get("tier", "free")
-            rate_limit = 4 if tier == "free" else config.get("rate_limit_calls", 100)
-
-            rate_limiter = RateLimiter(
-                max_calls=rate_limit, period_seconds=config.get("rate_limit_period", 60)
+            rate_limiter = rate_limiter or RateLimiter(
+                max_calls=rate_limit_calls,
+                period_seconds=rate_limit_period,
             )
 
-            circuit_breaker = CircuitBreaker(
-                failure_threshold=config.get("circuit_breaker_threshold", 10),
-                recovery_timeout=config.get("circuit_breaker_timeout", 60),
+            circuit_breaker = circuit_breaker or CircuitBreaker(
+                failure_threshold=circuit_breaker_threshold,
+                recovery_timeout=circuit_breaker_timeout,
             )
 
-            retry_config = RetryConfig(
-                max_attempts=config.get("max_retries", 3),
-                base_delay=config.get("retry_base_delay", 1.0),
-                max_delay=config.get("retry_max_delay", 30.0),
+            retry_config = retry_config or RetryConfig(
+                max_attempts=max_retries,
+                base_delay=retry_base_delay,
+                max_delay=retry_max_delay,
                 exponential=True,
                 jitter=True,
             )
